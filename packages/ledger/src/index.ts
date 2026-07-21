@@ -40,6 +40,8 @@ export type {
   AppendParams,
   EventInput,
   JsonValue,
+  IterateAllOptions,
+  IterateStreamOptions,
   ReadAllOptions,
   ReadStreamOptions,
   SourceRef,

@@ -47,6 +47,16 @@ export interface ReadStreamOptions {
   limit?: number;
 }
 
+export interface IterateAllOptions {
+  afterGlobalPosition?: number;
+  streamTypes?: string[];
+  batchSize?: number;
+}
+
+export interface IterateStreamOptions {
+  batchSize?: number;
+}
+
 export interface ReadAllOptions {
   afterGlobalPosition?: number;
   streamTypes?: string[];

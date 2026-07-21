@@ -5,6 +5,8 @@ import type { Projection } from './services/projection.types';
 import type { Subscription, SubscriptionOptions } from './services/subscription.types';
 import type {
   AppendParams,
+  IterateAllOptions,
+  IterateStreamOptions,
   ReadAllOptions,
   ReadStreamOptions,
   StoredEvent,
@@ -36,6 +38,8 @@ export interface Ledger {
   append(client: ClientBase, params: AppendParams): Promise<StoredEvent[]>;
   readStream(streamId: string, options?: ReadStreamOptions & ReadOptions): Promise<StoredEvent[]>;
   readAll(options?: ReadAllOptions): Promise<StoredEvent[]>;
+  iterateAll(options?: IterateAllOptions): AsyncGenerator<StoredEvent[]>;
+  iterateStream(streamId: string, options?: IterateStreamOptions): AsyncGenerator<StoredEvent[]>;
   getState(streamId: string, options?: ReadOptions): Promise<StreamState>;
   verifyStream(streamId: string): Promise<VerificationResult>;
   subscribe(options: SubscriptionOptions): Subscription;

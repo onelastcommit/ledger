@@ -2,7 +2,13 @@ import { StreamNotFoundError } from '../errors';
 import type { EventRepository } from '../repositories/event.repository';
 import type { Queryable } from '../repositories/repository.types';
 import type { StreamRepository } from '../repositories/stream.repository';
-import type { ReadAllOptions, ReadStreamOptions, StoredEvent, StreamState } from '../types';
+import type {
+  IterateAllOptions,
+  ReadAllOptions,
+  ReadStreamOptions,
+  StoredEvent,
+  StreamState,
+} from '../types';
 
 const DEFAULT_READ_LIMIT = 1000;
 
@@ -44,6 +50,27 @@ export class StreamReaderService {
       const last = batch.at(-1);
       if (last === undefined || batch.length < batchSize) return;
       afterSeq = last.seq;
+    }
+  }
+
+  async *iterateAll(
+    db: Queryable,
+    options: IterateAllOptions = {},
+  ): AsyncGenerator<StoredEvent[]> {
+    const batchSize = options.batchSize ?? DEFAULT_READ_LIMIT;
+    let afterGlobalPosition = options.afterGlobalPosition ?? 0;
+
+    for (;;) {
+      const batch = await this.events.findAll(db, {
+        afterGlobalPosition,
+        streamTypes: options.streamTypes ?? null,
+        limit: batchSize,
+      });
+      if (batch.length === 0) return;
+      yield batch;
+      const last = batch.at(-1);
+      if (last === undefined || batch.length < batchSize) return;
+      afterGlobalPosition = last.globalPosition;
     }
   }
 

@@ -14,7 +14,14 @@ import { ProjectionService } from './services/projection.service';
 import { StreamReaderService } from './services/stream-reader.service';
 import { SubscriptionService } from './services/subscription.service';
 import { VerificationService } from './services/verification.service';
-import type { AppendParams, ReadAllOptions, ReadStreamOptions, StoredEvent } from './types';
+import type {
+  AppendParams,
+  IterateAllOptions,
+  IterateStreamOptions,
+  ReadAllOptions,
+  ReadStreamOptions,
+  StoredEvent,
+} from './types';
 
 export const DEFAULT_NOTIFY_CHANNEL = 'ledger_events';
 
@@ -100,6 +107,9 @@ export const createLedger = (config: LedgerConfig): Ledger => {
     readStream: (streamId: string, options?: ReadStreamOptions & ReadOptions) =>
       reader.readStream(options?.client ?? pool, streamId, options ?? {}),
     readAll: (options?: ReadAllOptions) => reader.readAll(pool, options),
+    iterateAll: (options?: IterateAllOptions) => reader.iterateAll(pool, options),
+    iterateStream: (streamId: string, options?: IterateStreamOptions) =>
+      reader.iterateStream(pool, streamId, options?.batchSize),
     getState: (streamId: string, options?: ReadOptions) =>
       reader.getState(options?.client ?? pool, streamId),
     verifyStream: (streamId: string) => verifier.verifyStream(pool, streamId),
