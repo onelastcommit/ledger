@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Domain-agnostic, append-only event store with first-class provenance and per-entity state machines, on plain PostgreSQL.",
   "license": "MIT",
-  "author": "Ahmad Al Mezaal",
+  "author": "1 Percent Labs",
   "type": "module",
   "repository": {
     "type": "git",
