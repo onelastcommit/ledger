@@ -42,9 +42,11 @@ jobs:
 
       - run: pnpm run lint
 
-      - run: pnpm run typecheck
-
+      # Build first: apps/orders-example resolves the library through its
+      # published types, so dist must exist before anything is typechecked.
       - run: pnpm run build
+
+      - run: pnpm run typecheck
 
       - run: pnpm run test:unit
 

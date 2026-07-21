@@ -9,8 +9,9 @@ Start with **[the package README](packages/ledger/README.md)** for the quick sta
 ## Layout
 
 ```
-packages/ledger/   the library
-apps/              reserved for a docs site
+packages/ledger/      the library
+apps/orders-example/  a runnable worked example
+
 ```
 
 ## Development

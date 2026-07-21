@@ -181,14 +181,41 @@ const subscription = ledger.subscribe({
   batchSize: 100,
   pollIntervalMs: 1000,
   startPosition: 0,              // only used the first time this name is seen
+
+  maxRetries: 5,                 // handler attempts before dead-lettering
+  retryBaseMs: 100,              // doubles with jitter, capped by retryMaxDelayMs
+  retryMaxDelayMs: 30_000,
+  deadLetterPolicy: 'skip',      // or 'stop' to halt at the offending event
+  singleRunner: false,           // true takes an advisory lock — see below
+
   onEvent: async (event) => { /* must be idempotent */ },
   onError: (error) => logger.error(error),
+  onDeadLetter: ({ event, attempts, error }) => logger.error({ event, attempts, error }),
 });
 
 await subscription.caughtUp();   // resolves once the backlog is drained
 subscription.position();         // last committed cursor
+subscription.isActive();         // false while waiting for the singleRunner lock
 await subscription.stop();
 ```
+
+**Failure handling.** A throwing handler is retried with exponential backoff and
+full jitter. Once `maxRetries` is exhausted the event is written to
+`ledger_subscription_failures` and the cursor advances — nothing is lost, since
+the event itself remains in `ledger_events` and can be replayed by rewinding the
+cursor. Choose `deadLetterPolicy: 'stop'` if you would rather the subscription
+halt than skip.
+
+**Running several instances.** Delivery is at-least-once, so duplicates are
+expected and handlers must be idempotent regardless. If the handler is expensive
+enough that you want exclusivity anyway, `singleRunner: true` holds a Postgres
+advisory lock keyed on the subscription name; other instances stay dormant with
+`isActive() === false` and take over automatically when the holder stops.
+
+**Connections.** Every subscription on a ledger shares one `LISTEN` connection,
+which reconnects with backoff if it drops. You do not need to size your pool by
+subscription count. Call `ledger.close()` to release it — the pool remains
+yours to end.
 
 ### Event shape
 
@@ -224,6 +251,8 @@ Three tables. `ledger_events` is the log; the other two are derivable from it.
 | `ledger_events` | The append-only log. `UNIQUE (stream_id, seq)` enforces concurrency. |
 | `ledger_streams` | Cache of each stream's `last_seq`, `state` and `last_hash`. |
 | `ledger_subscriptions` | One durable cursor per subscriber name. |
+| `ledger_subscription_failures` | Events a subscriber gave up on, for inspection and replay. |
+| `ledger_migrations` | Which migrations have run. |
 
 ## Design decisions
 
@@ -248,6 +277,14 @@ Three tables. `ledger_events` is the log; the other two are derivable from it.
 - **Payloads must be JSON-serialisable.** They are stored as `jsonb` and canonicalised for hashing.
 - **`globalPosition` is a `BIGSERIAL` read into a JavaScript number.** Exact below 2^53; beyond roughly nine quadrillion events you would need a `bigint`.
 - **The events table is append-only.** Nothing in this library issues `UPDATE` or `DELETE` against it. To have the database enforce that, `REVOKE UPDATE, DELETE, TRUNCATE ON ledger_events` from your application role — see the comment at the top of `001_init.sql`.
+- **Very large appends are chunked, not rejected.** Postgres binds at most 65,535 parameters per statement, so batches above 5,957 events are split across statements inside the same transaction. Atomicity is unaffected.
+- **`readStream` and `verifyStream` load a whole stream into memory.** Comfortable for thousands of events; consider partitioning your streams before hundreds of thousands.
+
+## Example
+
+[`apps/orders-example`](../../apps/orders-example) is a runnable order-lifecycle
+app showing the wiring, an inline projection, conflict retries, the audit trail
+and a subscription. It is typechecked against the library in CI.
 
 ## Internal structure
 
