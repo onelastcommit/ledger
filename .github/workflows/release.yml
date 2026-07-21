@@ -59,15 +59,16 @@ jobs:
           pnpm --filter @1percentlabs/ledger pack --pack-destination /tmp
           VERSION=$(node -p "require('./packages/ledger/package.json').version")
           TARBALL="/tmp/1percentlabs-ledger-$VERSION.tgz"
+          tar -tzf "$TARBALL" | sort > /tmp/contents.txt
           echo "Contents of $TARBALL:"
-          tar -tzf "$TARBALL"
+          cat /tmp/contents.txt
           for REQUIRED in \
             package/dist/index.js \
             package/dist/index.d.ts \
             package/dist/migrations/001_init.sql \
             package/dist/migrations/002_subscription_failures.sql
           do
-            if ! tar -tzf "$TARBALL" | grep -qx "$REQUIRED"; then
+            if ! grep -qx "$REQUIRED" /tmp/contents.txt; then
               echo "Missing from the tarball: $REQUIRED" >&2
               exit 1
             fi
