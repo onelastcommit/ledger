@@ -35,9 +35,35 @@ preference:
    from CI**, so a local publish needs `--no-provenance` and produces no
    attestation.
 
-Reading the failure: a `403` mentioning two-factor authentication is an auth
-problem, not a permissions one — the scope exists and is accessible. A `404` on
-the scope means the org does not exist or the account is not a member.
+### Reading the failures
+
+npm returns the same `403` — "Two-factor authentication or granular access token
+with bypass 2fa enabled is required" — for several distinct causes, so it proves
+less than it appears to. It fires _before_ scope membership is checked, so it
+does not confirm the scope exists.
+
+Check in this order:
+
+1. `npm profile get` — if `two-factor auth: disabled`, that is the cause.
+   npm requires either 2FA on the account or a granular token created with 2FA
+   bypass explicitly enabled. Neither a plain login session nor a granular token
+   without that setting can publish.
+2. `npm org ls <org>` — confirms the organisation exists and lists members.
+   A genuine scope problem surfaces here, not in the publish error.
+3. Token scope. A token generated _before_ an organisation existed cannot have
+   been granted permission on it, because the scope was not yet offered in the
+   picker. Regenerate after creating the org.
+
+### The first publish is a special case
+
+Trusted publishing is configured on a package's settings page, so it cannot be
+set up before that package exists. The first release therefore has to go out via
+2FA-and-OTP or a bypass-enabled token; only afterwards can OIDC take over.
+
+pnpm attempts OIDC automatically and logs
+`Skipped OIDC: ERR_PNPM_AUTH_TOKEN_EXCHANGE ... 404` when no trusted publisher is
+configured, then falls back to `NODE_AUTH_TOKEN`. That warning is expected until
+trusted publishing is set up, and is not itself the failure.
 
 If the credential is missing, stop and say so rather than working around it.
 
