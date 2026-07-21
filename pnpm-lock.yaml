@@ -21,6 +21,25 @@ importers:
         specifier: ^8.48.2
         version: 8.64.0(eslint@9.39.5)(typescript@5.9.3)
 
+  apps/orders-example:
+    dependencies:
+      '@ahmadalmezaal/ledger':
+        specifier: workspace:*
+        version: link:../../packages/ledger
+      pg:
+        specifier: ^8.16.3
+        version: 8.22.0
+    devDependencies:
+      '@types/node':
+        specifier: ^22.18.9
+        version: 22.20.1
+      '@types/pg':
+        specifier: ^8.15.6
+        version: 8.20.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/ledger:
     dependencies:
       pg:

@@ -2,11 +2,14 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "packages/*/src/**/*.ts",
     "packages/*/test/**/*.ts",
-    "packages/*/*.config.ts"
+    "packages/*/*.config.ts",
+    "apps/*/src/**/*.ts"
   ]
 }

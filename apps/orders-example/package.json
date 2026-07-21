@@ -1,0 +1,20 @@
+{
+  "name": "orders-example",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A worked example of consuming @ahmadalmezaal/ledger from an application.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "start": "node --experimental-strip-types src/main.ts"
+  },
+  "dependencies": {
+    "@ahmadalmezaal/ledger": "workspace:*",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.9",
+    "@types/pg": "^8.15.6",
+    "typescript": "^5.9.3"
+  }
+}

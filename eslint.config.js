@@ -70,6 +70,13 @@ export default tseslint.config(
     },
   },
   {
+    // Example apps exist to print to a terminal.
+    files: ['apps/**/*.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
     files: ['**/test/**/*.ts'],
     rules: {
       '@typescript-eslint/no-unnecessary-condition': 'off',
