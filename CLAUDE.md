@@ -2,6 +2,13 @@
 
 Guidance for Claude Code when working in this repository.
 
+## Current state
+
+`@1percentlabs/ledger@0.1.1` is **published and live** on npm. Publishing goes
+through **trusted publishing (OIDC)** — there is no `NPM_TOKEN` secret and there
+should never be one again. Tag `vX.Y.Z` and the Release workflow does the rest.
+174 tests (107 unit, 67 integration), CI green.
+
 ## What this is
 
 `@1percentlabs/ledger` — a domain-agnostic, append-only event store on plain
@@ -30,6 +37,10 @@ These are non-negotiable and have been reiterated by the user:
 - **No enums.** Use string-literal unions or `as const` objects.
 - **Conventional commits**, small and logical. Co-author trailer on every commit.
 - **`pnpm lint` runs with `--max-warnings=0`.** Warnings fail the build.
+- **Typed payloads are the headline API.** `payloadOf<T>()` on a transition,
+  `defineEntity` infers the map, `ledger.entity(def)` gives a checked `append`.
+  It is a phantom type that erases at runtime. Keep it that way — no runtime
+  validation crept in, and that is deliberate.
 - **Prettier owns formatting.** `.prettierrc.json` declares the style the code
   already used (single quotes, 100 columns). Never hand-format against it, and
   never argue with it in ESLint — `eslint-config-prettier` disables the
@@ -96,6 +107,17 @@ parameters; the limit is derived in `event.repository.ts` as
 change what it stores, update `MaintenanceService.rebuildStream` to match, or
 rebuilds will silently produce different values from appends.
 
+**`PayloadMarker<P>` is covariant, so the constraint must be
+`TransitionDefinition<unknown>`, never `<never>`.** Using `<never>` silently
+collapses every inferred payload to `never`, and vitest will not catch it because
+vitest does not typecheck. The type tests are gated by `pnpm typecheck`, which
+verifies each `@ts-expect-error` is genuinely needed — if you change the type
+machinery, deliberately break one test and confirm tsc complains before trusting
+a green run.
+
+**`ledger.close()` stops every subscription it created**, then releases the hub.
+Do not revert to closing only the hub: subscription loops kept polling forever.
+
 **Advisory locks for `singleRunner` live on the NotificationHub's session.**
 They release if that connection drops, which is intentional failover. Do not
 move them to a per-subscription connection — that reintroduces the
@@ -151,8 +173,14 @@ see `.claude/skills/`.
 
 ## Known gaps
 
-- Not published to npm. The release workflow exists and is gated on an
-  `NPM_TOKEN` secret plus a `v*` tag; nobody has published yet.
+- **Deriving the event union is awkward for consumers.** Today it is
+  `Parameters<typeof orders.append>[1]['events'][number]` or
+  `NonNullable<(typeof order)['__payloads']>`. An exported `EventsOf<typeof def>`
+  helper would be a cheap, worthwhile 0.1.2.
+- The `__payloads` phantom property is visible on the public `EntityDefinition`
+  type. It works, but a branded unique symbol would be tidier.
+- Typed payloads cover `append`. Reads still return `StoredEvent<unknown>`; a
+  typed `readStream` that narrows by event type is the natural next step.
 - `apps/` holds only the example. The docs site remains a deliberate non-goal.
 - No snapshotting, sagas, upcasting or multi-database support — all explicit
   non-goals from the original spec.
