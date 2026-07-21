@@ -22,6 +22,8 @@ the caveat that while on 0.x, minor versions may contain breaking changes.
 - `ledger.rebuildStream()` and `ledger.rebuildAllStreams()` recompute the
   `ledger_streams` cache by replaying the log, reporting which rows disagreed.
   The cache was always described as derivable; now it is actually recoverable.
+- `ledger.iterateAll()` and `ledger.iterateStream()` are async generators yielding
+  batches, so the whole log can be walked without holding it in memory.
 - `subscription.status()` reports `position`, `headPosition`, `lag`, `active` and
   `deadLettered`. `lag` is an exact count of pending events rather than position
   arithmetic, so it stays accurate when stream types interleave.

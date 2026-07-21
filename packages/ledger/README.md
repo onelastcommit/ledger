@@ -170,6 +170,24 @@ Pages the global log by `globalPosition`.
 await ledger.readAll({ afterGlobalPosition: 0, streamTypes: ['order'], limit: 500 });
 ```
 
+### `ledger.iterateAll(options?)` and `ledger.iterateStream(streamId, options?)`
+
+Async generators yielding batches, for walking more than fits in memory —
+rebuilding a read model from scratch, exporting, auditing.
+
+```ts
+for await (const batch of ledger.iterateAll({ streamTypes: ['order'], batchSize: 500 })) {
+  await indexBatch(batch);
+}
+
+for await (const batch of ledger.iterateStream(orderId, { batchSize: 200 })) {
+  for (const event of batch) audit(event);
+}
+```
+
+Both stop as soon as the log is exhausted, and `break` abandons the walk without
+reading further.
+
 ### `ledger.getState(streamId, options?)`
 
 `{ state, seq }`. `state` is `null` for stream types with no entity definition. Throws `StreamNotFoundError` if the stream does not exist.
@@ -320,7 +338,7 @@ Three tables. `ledger_events` is the log; the other two are derivable from it.
 - **`globalPosition` is a `BIGSERIAL` read into a JavaScript number.** Exact below 2^53; beyond roughly nine quadrillion events you would need a `bigint`.
 - **The events table is append-only.** Nothing in this library issues `UPDATE` or `DELETE` against it. To have the database enforce that, `REVOKE UPDATE, DELETE, TRUNCATE ON ledger_events` from your application role — see the comment at the top of `001_init.sql`.
 - **Very large appends are chunked, not rejected.** Postgres binds at most 65,535 parameters per statement, so batches above 5,957 events are split across statements inside the same transaction. Atomicity is unaffected.
-- **Long streams should be paged.** `readStream` takes `afterSeq`/`limit`, and `verifyStream` walks in batches internally. `readAll` still returns a whole batch in memory, bounded by `limit`.
+- **Nothing needs to fit in memory.** `readStream` takes `afterSeq`/`limit`, `verifyStream` walks in batches internally, and `iterateAll`/`iterateStream` stream the log a batch at a time.
 
 ## Example
 

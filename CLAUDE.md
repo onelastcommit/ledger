@@ -135,6 +135,13 @@ pnpm test          # unit, then integration
 
 Integration tests need Docker, or `DATABASE_URL` pointing at a scratch database.
 
+CI runs `lint`, `typecheck`, `test-unit` and `test-integration` as four
+concurrent jobs, with shared setup in `.github/actions/setup` and Postgres only
+in the integration job. The aggregate `ci` job is the one to require in branch
+protection. `lint` and `typecheck` each run `pnpm build` first because
+`apps/orders-example` resolves the library through its built types; the tests do
+not, because they import from source.
+
 Adding a migration and cutting a release each have a skill —
 see `.claude/skills/`.
 
@@ -145,5 +152,5 @@ see `.claude/skills/`.
 - `apps/` holds only the example. The docs site remains a deliberate non-goal.
 - No snapshotting, sagas, upcasting or multi-database support — all explicit
   non-goals from the original spec.
-- `readAll` returns whole batches in memory; only `readStream`/`verifyStream`
-  page.
+- `readAll` returns one batch bounded by `limit`; use `iterateAll` to walk the
+  whole log without holding it in memory.
