@@ -15,7 +15,12 @@ export { decodeUlidTime, isUlid, monotonicUlidFactory, ulid } from './domain/uli
 
 export { ALL_EVENTS } from './services/projection.service';
 export type { Projection, ProjectionContext } from './services/projection.types';
-export type { Subscription, SubscriptionOptions } from './services/subscription.types';
+export type {
+  DeadLetter,
+  DeadLetterPolicy,
+  Subscription,
+  SubscriptionOptions,
+} from './services/subscription.types';
 
 export {
   HashChainBrokenError,

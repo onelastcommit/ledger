@@ -8,6 +8,7 @@ import { StreamRepository } from './repositories/stream.repository';
 import { SubscriptionRepository } from './repositories/subscription.repository';
 import { AppendService } from './services/append.service';
 import { MigrationService } from './services/migration.service';
+import { NotificationHub } from './services/notification-hub';
 import { ProjectionService } from './services/projection.service';
 import { StreamReaderService } from './services/stream-reader.service';
 import { SubscriptionService } from './services/subscription.service';
@@ -45,11 +46,18 @@ export const createLedger = (config: LedgerConfig): Ledger => {
     names: MIGRATION_NAMES,
     loadSql: loadMigrationSql,
   });
+  const hub = new NotificationHub({
+    pool,
+    channel: notifyChannel,
+    onError: (error) => {
+      console.error('[ledger] notification listener failed:', error);
+    },
+  });
   const subscriber = new SubscriptionService({
     pool,
     reader,
     subscriptions: subscriptionRepository,
-    notifyChannel,
+    hub,
   });
 
   const append = (client: ClientBase, params: AppendParams): Promise<StoredEvent[]> =>
@@ -87,5 +95,6 @@ export const createLedger = (config: LedgerConfig): Ledger => {
       reader.getState(options?.client ?? pool, streamId),
     verifyStream: (streamId: string) => verifier.verifyStream(pool, streamId),
     subscribe: (options) => subscriber.subscribe(options),
+    close: () => hub.close(),
   };
 };

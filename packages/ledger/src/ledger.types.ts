@@ -37,5 +37,10 @@ export interface Ledger {
   getState(streamId: string, options?: ReadOptions): Promise<StreamState>;
   verifyStream(streamId: string): Promise<VerificationResult>;
   subscribe(options: SubscriptionOptions): Subscription;
+  /**
+   * Release the shared notification listener. Does not close the pool — that
+   * belongs to the caller. Stop your subscriptions first.
+   */
+  close(): Promise<void>;
   readonly entities: ReadonlyMap<string, EntityDefinition>;
 }
