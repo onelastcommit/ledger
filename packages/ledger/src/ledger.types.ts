@@ -1,5 +1,6 @@
 import type { ClientBase, Pool, PoolClient } from 'pg';
-import type { EntityDefinition } from './domain/fsm.types';
+import type { AnyEntityDefinition, EntityDefinition } from './domain/fsm.types';
+import type { EntityLedger } from './entity.types';
 import type { RebuildReport, RebuiltStream } from './services/maintenance.types';
 import type { Projection } from './services/projection.types';
 import type { Subscription, SubscriptionOptions } from './services/subscription.types';
@@ -16,7 +17,7 @@ import type {
 
 export interface LedgerConfig {
   pool: Pool;
-  entities?: readonly EntityDefinition[];
+  entities?: readonly AnyEntityDefinition[];
   projections?: readonly Projection[];
   notifyChannel?: string;
 }
@@ -43,8 +44,9 @@ export interface Ledger {
   getState(streamId: string, options?: ReadOptions): Promise<StreamState>;
   verifyStream(streamId: string): Promise<VerificationResult>;
   subscribe(options: SubscriptionOptions): Subscription;
+  entity<Payloads>(definition: EntityDefinition<Payloads>): EntityLedger<Payloads>;
   rebuildStream(streamId: string): Promise<RebuiltStream>;
   rebuildAllStreams(): Promise<RebuildReport>;
   close(): Promise<void>;
-  readonly entities: ReadonlyMap<string, EntityDefinition>;
+  readonly entities: ReadonlyMap<string, AnyEntityDefinition>;
 }

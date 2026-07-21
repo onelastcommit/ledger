@@ -1,14 +1,23 @@
 import pg from 'pg';
-import { createLedger, defineEntity, type Projection } from '@1percentlabs/ledger';
+import { createLedger, defineEntity, payloadOf, type Projection } from '@1percentlabs/ledger';
 
 export const order = defineEntity({
   streamType: 'order',
   initial: 'placed',
   states: ['placed', 'paid', 'shipped', 'cancelled'],
   events: {
-    OrderPlaced: { from: [null], to: 'placed' },
-    OrderPaid: { from: ['placed'], to: 'paid' },
-    OrderShipped: { from: ['paid'], to: 'shipped', terminal: true },
+    OrderPlaced: {
+      from: [null],
+      to: 'placed',
+      payload: payloadOf<{ total: number; currency: string }>(),
+    },
+    OrderPaid: { from: ['placed'], to: 'paid', payload: payloadOf<{ method: 'card' | 'cash' }>() },
+    OrderShipped: {
+      from: ['paid'],
+      to: 'shipped',
+      terminal: true,
+      payload: payloadOf<{ carrier: string }>(),
+    },
     OrderCancelled: { from: ['placed', 'paid'], to: 'cancelled', terminal: true },
   },
 });
@@ -36,6 +45,10 @@ export const ledger = createLedger({
   entities: [order],
   projections: [orderSummary],
 });
+
+export const orders = ledger.entity(order);
+
+export type OrderEvent = Parameters<typeof orders.append>[1]['events'][number];
 
 export const setupReadModel = async (): Promise<void> => {
   await pool.query(`

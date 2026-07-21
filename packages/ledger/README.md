@@ -105,6 +105,53 @@ await ledger.withTransaction((tx) =>
 ); // throws InvalidTransitionError, rolls back
 ```
 
+## Typed payloads
+
+Declare a payload type alongside each transition and the compiler checks every
+append against it. This is purely type-level — `payloadOf` erases at runtime and
+costs nothing.
+
+```ts
+import { defineEntity, payloadOf } from '@1percentlabs/ledger';
+
+const order = defineEntity({
+  streamType: 'order',
+  initial: 'placed',
+  states: ['placed', 'paid', 'shipped', 'cancelled'],
+  events: {
+    OrderPlaced: {
+      from: [null],
+      to: 'placed',
+      payload: payloadOf<{ total: number; currency: string }>(),
+    },
+    OrderPaid: {
+      from: ['placed'],
+      to: 'paid',
+      payload: payloadOf<{ method: 'card' | 'cash' }>(),
+    },
+    OrderShipped: { from: ['paid'], to: 'shipped', terminal: true },
+  },
+});
+
+const orders = ledger.entity(order);
+
+await ledger.withTransaction(async (tx) => {
+  await orders.append(tx, {
+    streamId: 'order:1001', // streamType is implied
+    expectedSeq: 0,
+    events: [{ type: 'OrderPlaced', actor, payload: { total: 4999, currency: 'GBP' } }],
+  });
+});
+```
+
+The compiler now rejects a missing field, a wrong type, a payload belonging to a
+different event, and an event name the entity does not declare. Events without a
+`payloadOf` marker stay `unknown`, so adopting this is incremental — annotate the
+events you care about and leave the rest.
+
+`ledger.entity()` is additive. `tx.append({ streamType, ... })` still works
+exactly as before if you would rather not use it.
+
 ## API
 
 ### `createLedger(config)`
@@ -213,8 +260,8 @@ restores appendability: the recovered `last_hash` lets the chain continue.
 
 ### `ledger.close()`
 
-Releases the shared notification listener. Stop your subscriptions first. The
-pool is yours to end.
+Stops every subscription this ledger created, then releases the shared
+notification listener. The pool is yours to end.
 
 ### `ledger.subscribe(options)`
 

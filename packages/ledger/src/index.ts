@@ -1,12 +1,22 @@
 export { createLedger, DEFAULT_NOTIFY_CHANNEL } from './ledger';
 export type { Ledger, LedgerConfig, LedgerTransaction, ReadOptions } from './ledger.types';
 
-export { applyEvent, defineEntity, foldState, isTerminalState } from './domain/fsm';
+export { applyEvent, defineEntity, foldState, isTerminalState, payloadOf } from './domain/fsm';
 export type {
+  AnyEntityDefinition,
   EntityDefinition,
   EntityDefinitionInput,
+  EventPayloads,
+  PayloadMarker,
   TransitionDefinition,
 } from './domain/fsm.types';
+export type {
+  AppendTarget,
+  EntityLedger,
+  TypedAppendParams,
+  TypedEvent,
+  TypedEventInput,
+} from './entity.types';
 
 export {
   canonicalise,

@@ -321,4 +321,48 @@ describe.skipIf(!hasDatabase)('resilience', () => {
       }
     });
   });
+  describe('lifecycle', () => {
+    it('stops every subscription it created when the ledger is closed', async () => {
+      const own = await createHarness({ entities: [order] });
+      let handled = 0;
+
+      const a = own.ledger.subscribe({
+        name: 'closes-a',
+        pollIntervalMs: 20,
+        onEvent: () => {
+          handled += 1;
+        },
+      });
+      const b = own.ledger.subscribe({
+        name: 'closes-b',
+        pollIntervalMs: 20,
+        onEvent: () => undefined,
+      });
+      await a.caughtUp();
+      await b.caughtUp();
+
+      await own.ledger.close();
+
+      const seenAtClose = handled;
+      await own.ledger.withTransaction((tx) =>
+        tx.append({
+          streamId: uniqueStreamId(),
+          streamType: 'order',
+          expectedSeq: 0,
+          events: [placed],
+        }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      expect(handled).toBe(seenAtClose);
+      await own.close();
+    });
+
+    it('close() is safe with no subscriptions and safe to repeat', async () => {
+      const own = await createHarness({ entities: [order] });
+      await own.ledger.close();
+      await expect(own.ledger.close()).resolves.toBeUndefined();
+      await own.close();
+    });
+  });
 });

@@ -1,5 +1,7 @@
 import type { ClientBase } from 'pg';
 import { buildEntityRegistry } from './domain/fsm';
+import type { EntityDefinition } from './domain/fsm.types';
+import { createEntityLedger } from './entity';
 import type { Ledger, LedgerConfig, LedgerTransaction, ReadOptions } from './ledger.types';
 import { loadMigrationSql, MIGRATION_NAMES } from './migration-loader';
 import { EventRepository } from './repositories/event.repository';
@@ -13,6 +15,7 @@ import { NotificationHub } from './services/notification-hub';
 import { ProjectionService } from './services/projection.service';
 import { StreamReaderService } from './services/stream-reader.service';
 import { SubscriptionService } from './services/subscription.service';
+import type { Subscription } from './services/subscription.types';
 import { VerificationService } from './services/verification.service';
 import type {
   AppendParams,
@@ -99,7 +102,9 @@ export const createLedger = (config: LedgerConfig): Ledger => {
     }
   };
 
-  return {
+  const live = new Set<Subscription>();
+
+  const ledger: Ledger = {
     entities,
     append,
     withTransaction,
@@ -113,9 +118,22 @@ export const createLedger = (config: LedgerConfig): Ledger => {
     getState: (streamId: string, options?: ReadOptions) =>
       reader.getState(options?.client ?? pool, streamId),
     verifyStream: (streamId: string) => verifier.verifyStream(pool, streamId),
-    subscribe: (options) => subscriber.subscribe(options),
+    subscribe: (options) => {
+      const subscription = subscriber.subscribe(options);
+      live.add(subscription);
+      return subscription;
+    },
+    entity: <Payloads>(definition: EntityDefinition<Payloads>) =>
+      createEntityLedger(ledger, definition),
     rebuildStream: (streamId: string) => maintenance.rebuildStream(streamId),
     rebuildAllStreams: () => maintenance.rebuildAllStreams(),
-    close: () => hub.close(),
+    close: async () => {
+      const running = [...live];
+      live.clear();
+      await Promise.all(running.map((subscription) => subscription.stop()));
+      await hub.close();
+    },
   };
+
+  return ledger;
 };

@@ -3,9 +3,19 @@ import {
   InvalidTransitionError,
   UnknownEventTypeError,
 } from '../errors';
-import type { EntityDefinition, EntityDefinitionInput } from './fsm.types';
+import type {
+  AnyEntityDefinition,
+  EntityDefinition,
+  EntityDefinitionInput,
+  EventPayloads,
+  PayloadMarker,
+} from './fsm.types';
 
-export const defineEntity = (input: EntityDefinitionInput): EntityDefinition => {
+export const payloadOf = <P>(): PayloadMarker<P> => undefined as unknown as PayloadMarker<P>;
+
+export const defineEntity = <const Input extends EntityDefinitionInput>(
+  input: Input,
+): EntityDefinition<EventPayloads<Input['events']>> => {
   const { streamType, initial, states, events } = input;
   const fail = (message: string): never => {
     throw new InvalidEntityDefinitionError(`Entity "${streamType}": ${message}`);
@@ -61,11 +71,11 @@ export const defineEntity = (input: EntityDefinitionInput): EntityDefinition => 
   return { ...input, terminalStates };
 };
 
-export const isTerminalState = (definition: EntityDefinition, state: string | null): boolean =>
+export const isTerminalState = (definition: AnyEntityDefinition, state: string | null): boolean =>
   state !== null && definition.terminalStates.has(state);
 
 export const applyEvent = (
-  definition: EntityDefinition,
+  definition: AnyEntityDefinition,
   currentState: string | null,
   eventType: string,
   streamId: string,
@@ -81,7 +91,7 @@ export const applyEvent = (
 };
 
 export const foldState = (
-  definition: EntityDefinition,
+  definition: AnyEntityDefinition,
   eventTypes: readonly string[],
   streamId = '<unknown>',
 ): string | null => {
@@ -93,9 +103,9 @@ export const foldState = (
 };
 
 export const buildEntityRegistry = (
-  entities: readonly EntityDefinition[],
-): ReadonlyMap<string, EntityDefinition> => {
-  const registry = new Map<string, EntityDefinition>();
+  entities: readonly AnyEntityDefinition[],
+): ReadonlyMap<string, AnyEntityDefinition> => {
+  const registry = new Map<string, AnyEntityDefinition>();
   for (const entity of entities) {
     if (registry.has(entity.streamType)) {
       throw new InvalidEntityDefinitionError(

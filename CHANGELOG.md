@@ -9,6 +9,24 @@ the caveat that while on 0.x, minor versions may contain breaking changes.
 
 Nothing yet.
 
+## [0.1.1] — 2026-07-21
+
+### Added
+
+- Event payloads can be typed. `payloadOf<T>()` marks a transition's payload type,
+  `defineEntity` infers a payload map from it, and `ledger.entity(definition)`
+  returns a facade whose `append` checks each event against it. A missing field,
+  a wrong type, a payload from a different event, or an undeclared event name are
+  now compile errors. Purely type-level: the marker erases at runtime and adds no
+  dependency. Fully additive — events without a marker stay `unknown`, and
+  `tx.append({ streamType, ... })` is unchanged.
+
+### Fixed
+
+- `ledger.close()` now stops every subscription it created. Previously it closed
+  the shared listener but left subscription loops polling the database
+  indefinitely, so forgetting to stop them individually leaked a query loop.
+
 ## [0.1.0] — 2026-07-21
 
 First release. An append-only event log on plain PostgreSQL with first-class
