@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@11.6.0",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "build": "pnpm -r run build",
@@ -13,7 +13,7 @@
     "test:unit": "pnpm -r run test:unit",
     "test:integration": "pnpm -r run test:integration",
     "typecheck": "pnpm -r run typecheck",
-    "lint": "eslint ."
+    "lint": "eslint . --max-warnings=0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
