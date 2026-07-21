@@ -1,6 +1,6 @@
 import type { EntityDefinition } from './domain/fsm.types';
 import { LedgerError } from './errors';
-import type { AppendTarget, EntityLedger, TypedAppendParams } from './entity.types';
+import type { AppendTarget, EntityLedger, StoredEventOf, TypedAppendParams } from './entity.types';
 import type { Ledger, LedgerTransaction } from './ledger.types';
 import type { AppendParams, EventInput, StoredEvent } from './types';
 
@@ -38,7 +38,8 @@ export const createEntityLedger = <Payloads>(
     definition,
     streamType,
     append,
-    readStream: (streamId, options) => ledger.readStream(streamId, options),
+    readStream: async (streamId, options) =>
+      (await ledger.readStream(streamId, options)) as Array<StoredEventOf<Payloads>>,
     getState: (streamId) => ledger.getState(streamId),
     verifyStream: (streamId) => ledger.verifyStream(streamId),
   };

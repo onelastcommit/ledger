@@ -184,8 +184,12 @@ see `.claude/skills/`.
   `D extends EntityDefinition<infer P>` — that form infers `P | undefined` off
   the optional property. If `__payloads` is ever rebranded, `PayloadsOf` is the
   thing that breaks, and it breaks silently into `never`.
-- Typed payloads cover `append`. Reads still return `StoredEvent<unknown>`; a
-  typed `readStream` that narrows by event type is the natural next step.
+- Typed reads on the entity facade are an **unchecked cast**, deliberately. The
+  event type is enforced by the FSM at append time; the payload shape is not
+  validated on the way out. `payloadVersion` is the trap — old rows type as the
+  current shape. This was a considered trade (see README), not an oversight. Do
+  not "fix" it by adding runtime validation; that costs the zero-dependency
+  property. Reads via `ledger.readStream()` stay `StoredEvent<unknown>`.
 - `apps/` holds only the example. The docs site remains a deliberate non-goal.
 - No snapshotting, sagas, upcasting or multi-database support — all explicit
   non-goals from the original spec.

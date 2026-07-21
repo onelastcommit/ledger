@@ -17,6 +17,7 @@ export type {
   EventTypeOf,
   PayloadOf,
   PayloadsOf,
+  StoredEventOf,
   TypedAppendParams,
   TypedEvent,
   TypedEventInput,

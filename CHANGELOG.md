@@ -7,7 +7,16 @@ the caveat that while on 0.x, minor versions may contain breaking changes.
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- `ledger.entity(...).readStream()` returns a discriminated union, so switching
+  on `type` narrows `payload`. `StoredEventOf<Payloads>` is exported for naming
+  it directly. Note that this is an assertion rather than a check: the event type
+  is enforced by the state machine at append time, but nothing validates a stored
+  payload against the declared shape, so rows written before a payload changed
+  are typed as the new shape. Branch on `payloadVersion` where a shape has
+  evolved. `ledger.readStream()` and the `tx` path are unchanged and still return
+  `StoredEvent<unknown>`.
 
 ## [0.1.2] — 2026-07-21
 

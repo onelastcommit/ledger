@@ -178,6 +178,46 @@ type OrderPayloads = PayloadsOf<typeof order>;
 of everything `append` accepts, which makes it the natural parameter type for a
 function that builds an event.
 
+### Typed reads
+
+`ledger.entity(...).readStream()` returns the events as a discriminated union, so
+switching on `type` narrows `payload`:
+
+```ts
+for (const event of await orders.readStream('order:1001')) {
+  switch (event.type) {
+    case 'OrderPlaced':
+      console.log(event.payload.currency, event.payload.total);
+      break;
+    case 'OrderPaid':
+      console.log(event.payload.method);
+      break;
+  }
+}
+```
+
+**This is an assertion, and it is worth understanding exactly how far it goes.**
+Appends are checked — the compiler sees the value going in. Reads are not: the
+rows come from Postgres, and the compiler never saw them written.
+
+The two halves differ in how much they guarantee:
+
+- The **event type** is genuinely enforced. The state machine rejects undeclared
+  event types inside the append transaction, on both the typed and untyped paths,
+  so the union of names is a real guarantee.
+- The **payload shape** is asserted, not checked. Nothing validates a stored
+  payload against the type you declared today.
+
+The case that bites is payload evolution. If you change a payload's shape and use
+`payloadVersion` to mark it, the old rows are still in the log and still typed as
+the new shape — reading a v1 row as v2 is a compile-time success and a runtime
+`undefined`. Branch on `payloadVersion` when a shape has changed, or validate at
+the boundary. The library will not do it for you; that is what keeps payloads
+opaque and the dependency list at one.
+
+`ledger.readStream()` and the `tx` path are unchanged and still return
+`StoredEvent<unknown>` — the domain-agnostic read stays domain-agnostic.
+
 ## API
 
 ### `createLedger(config)`

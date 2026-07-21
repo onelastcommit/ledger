@@ -7,6 +7,7 @@ import type {
   EventTypeOf,
   PayloadOf,
   PayloadsOf,
+  StoredEventOf,
   TypedEvent,
 } from '../../src/entity.types';
 
@@ -135,6 +136,34 @@ describe('typed entity payloads', () => {
     // @ts-expect-error OrderTeleported is not an event of this entity
     const type: EventTypeOf<typeof order> = 'OrderTeleported';
     expect(type).toBe('OrderTeleported');
+  });
+
+  it('narrows a stored event payload by its type', () => {
+    const describeEvent = (event: StoredEventOf<Payloads>): string => {
+      switch (event.type) {
+        case 'OrderPlaced':
+          return `${event.payload.currency} ${event.payload.total}`;
+        case 'OrderPaid':
+          return event.payload.method;
+        case 'OrderShipped':
+          return event.payload.carrier;
+        case 'OrderCancelled':
+          return 'cancelled';
+      }
+    };
+    const placed = {
+      type: 'OrderPlaced',
+      payload: { total: 4999, currency: 'GBP' },
+    } as StoredEventOf<Payloads>;
+    expect(describeEvent(placed)).toBe('GBP 4999');
+  });
+
+  it('keeps the stored envelope fields alongside the narrowed payload', () => {
+    expectTypeOf<StoredEventOf<Payloads>['seq']>().toEqualTypeOf<number>();
+    expectTypeOf<StoredEventOf<Payloads>['hash']>().toEqualTypeOf<string>();
+    expectTypeOf<StoredEventOf<Payloads>['type']>().toEqualTypeOf<
+      'OrderPlaced' | 'OrderPaid' | 'OrderShipped' | 'OrderCancelled'
+    >();
   });
 
   it('still types entities declared without any payload markers', () => {

@@ -31,6 +31,10 @@ export interface TypedAppendParams<Payloads> {
 
 export type AppendTarget = LedgerTransaction | ClientBase;
 
+export type StoredEventOf<Payloads> = {
+  [K in keyof Payloads]: Omit<StoredEvent<Payloads[K]>, 'type'> & { type: K };
+}[keyof Payloads];
+
 export type PayloadsOf<D> = D extends { readonly definition: { readonly __payloads?: infer P } }
   ? NonNullable<P>
   : D extends { readonly __payloads?: infer P }
@@ -47,7 +51,10 @@ export interface EntityLedger<Payloads> {
   readonly definition: EntityDefinition<Payloads>;
   readonly streamType: string;
   append(target: AppendTarget, params: TypedAppendParams<Payloads>): Promise<StoredEvent[]>;
-  readStream(streamId: string, options?: ReadStreamOptions): Promise<StoredEvent[]>;
+  readStream(
+    streamId: string,
+    options?: ReadStreamOptions,
+  ): Promise<Array<StoredEventOf<Payloads>>>;
   getState(streamId: string): Promise<StreamState>;
   verifyStream(streamId: string): Promise<VerificationResult>;
 }
