@@ -1,0 +1,125 @@
+import {
+  InvalidEntityDefinitionError,
+  InvalidTransitionError,
+  UnknownEventTypeError,
+} from './errors.js';
+
+export interface TransitionDefinition {
+  from: readonly (string | null)[];
+  to: string;
+  terminal?: boolean;
+}
+
+export interface EntityDefinitionInput {
+  streamType: string;
+  initial: string;
+  states: readonly string[];
+  events: Readonly<Record<string, TransitionDefinition>>;
+}
+
+export interface EntityDefinition extends EntityDefinitionInput {
+  readonly terminalStates: ReadonlySet<string>;
+}
+
+export function defineEntity(input: EntityDefinitionInput): EntityDefinition {
+  const { streamType, initial, states, events } = input;
+  const fail = (message: string): never => {
+    throw new InvalidEntityDefinitionError(`Entity "${streamType}": ${message}`);
+  };
+
+  if (!streamType) fail('streamType must be a non-empty string.');
+  if (states.length === 0) fail('states must not be empty.');
+
+  const stateSet = new Set(states);
+  if (stateSet.size !== states.length) fail('states contains duplicates.');
+  if (!stateSet.has(initial)) fail(`initial state "${initial}" is not listed in states.`);
+  if (Object.keys(events).length === 0) fail('events must not be empty.');
+
+  const terminalStates = new Set<string>();
+  let hasCreationTransition = false;
+  let initialIsReachable = false;
+
+  for (const [eventType, transition] of Object.entries(events)) {
+    if (transition.from.length === 0) {
+      fail(`event "${eventType}" has an empty "from" list, so it can never fire.`);
+    }
+    if (!stateSet.has(transition.to)) {
+      fail(`event "${eventType}" transitions to unknown state "${transition.to}".`);
+    }
+    for (const from of transition.from) {
+      if (from === null) {
+        hasCreationTransition = true;
+        if (transition.to === initial) initialIsReachable = true;
+        continue;
+      }
+      if (!stateSet.has(from)) {
+        fail(`event "${eventType}" transitions from unknown state "${from}".`);
+      }
+    }
+    if (transition.terminal === true) terminalStates.add(transition.to);
+  }
+
+  if (!hasCreationTransition) {
+    fail('no event declares `from: [null]`, so a stream of this type could never be created.');
+  }
+  if (!initialIsReachable) {
+    fail(`initial state "${initial}" is not the target of any creation transition.`);
+  }
+
+  for (const [eventType, transition] of Object.entries(events)) {
+    for (const from of transition.from) {
+      if (from !== null && terminalStates.has(from)) {
+        fail(`state "${from}" is terminal, but event "${eventType}" transitions out of it.`);
+      }
+    }
+  }
+
+  return { ...input, terminalStates };
+}
+
+export function isTerminalState(definition: EntityDefinition, state: string | null): boolean {
+  return state !== null && definition.terminalStates.has(state);
+}
+
+export function applyEvent(
+  definition: EntityDefinition,
+  currentState: string | null,
+  eventType: string,
+  streamId: string,
+): string {
+  const transition = definition.events[eventType];
+  if (transition === undefined) {
+    throw new UnknownEventTypeError(definition.streamType, eventType);
+  }
+  if (isTerminalState(definition, currentState) || !transition.from.includes(currentState)) {
+    throw new InvalidTransitionError(streamId, definition.streamType, currentState, eventType);
+  }
+  return transition.to;
+}
+
+export function foldState(
+  definition: EntityDefinition,
+  eventTypes: readonly string[],
+  streamId = '<unknown>',
+): string | null {
+  let state: string | null = null;
+  for (const eventType of eventTypes) {
+    state = applyEvent(definition, state, eventType, streamId);
+  }
+  return state;
+}
+
+export function buildEntityRegistry(
+  entities: readonly EntityDefinition[],
+): ReadonlyMap<string, EntityDefinition> {
+  const registry = new Map<string, EntityDefinition>();
+  for (const entity of entities) {
+    if (registry.has(entity.streamType)) {
+      throw new InvalidEntityDefinitionError(
+        `Duplicate entity definition for stream type "${entity.streamType}".`,
+      );
+    }
+    registry.set(entity.streamType, entity);
+  }
+  return registry;
+}
