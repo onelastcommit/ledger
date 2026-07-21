@@ -15,8 +15,31 @@ Publishing to npm is **irreversible** — a published version cannot be reused,
 and unpublishing is restricted after 72 hours. Confirm with the user before
 tagging. Never publish unprompted.
 
-Requires an `NPM_TOKEN` repository secret. If it is missing, stop and say so
-rather than working around it.
+## Authentication
+
+The package publishes under the `@1percentlabs` scope. Three routes, in order of
+preference:
+
+1. **Trusted publishing (OIDC).** Authorise the repository and workflow on the
+   package's npm settings page; CI then publishes with no stored secret and gets
+   provenance automatically. Configured per-package, so it can only be set up
+   after the first publish.
+2. **Granular access token** at
+   `https://www.npmjs.com/settings/<user>/tokens/granular-access-tokens/new`,
+   scoped to `@1percentlabs` with read/write on both packages and the
+   organisation. Store as the `NPM_TOKEN` repository secret. This is what
+   satisfies npm's 2FA requirement for automated publishing; classic Automation
+   tokens also work but are being phased out.
+3. **Local publish with an OTP** — `pnpm publish --otp=<code>`. Fine for a first
+   release, but `publishConfig.provenance` is `true` and **provenance only works
+   from CI**, so a local publish needs `--no-provenance` and produces no
+   attestation.
+
+Reading the failure: a `403` mentioning two-factor authentication is an auth
+problem, not a permissions one — the scope exists and is accessible. A `404` on
+the scope means the org does not exist or the account is not a member.
+
+If the credential is missing, stop and say so rather than working around it.
 
 ## Steps
 
