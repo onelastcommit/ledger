@@ -1,0 +1,10 @@
+packages:
+  - 'packages/*'
+  - 'apps/*'
+allowBuilds:
+  # esbuild backs tsup and vitest; it needs its postinstall to fetch the binary.
+  esbuild: true
+  # Optional native speed-ups for the testcontainers SSH transport — not needed.
+  cpu-features: false
+  protobufjs: false
+  ssh2: false
