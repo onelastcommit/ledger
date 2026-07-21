@@ -1,5 +1,6 @@
 // @ts-check
 import eslint from '@eslint/js';
+import prettier from 'eslint-config-prettier';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
@@ -70,12 +71,12 @@ export default tseslint.config(
     },
   },
   {
-    // Example apps exist to print to a terminal.
     files: ['apps/**/*.ts'],
     rules: {
       'no-console': 'off',
     },
   },
+  prettier,
   {
     files: ['**/test/**/*.ts'],
     rules: {

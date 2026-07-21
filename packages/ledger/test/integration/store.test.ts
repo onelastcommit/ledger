@@ -7,7 +7,14 @@ import {
   VersionConflictError,
 } from '../../src/errors';
 import { foldState } from '../../src/domain/fsm';
-import { createHarness, customer, hasDatabase, order, uniqueStreamId, type Harness } from './harness';
+import {
+  createHarness,
+  customer,
+  hasDatabase,
+  order,
+  uniqueStreamId,
+  type Harness,
+} from './harness';
 
 describe.skipIf(!hasDatabase)('PostgresEventStore', () => {
   let h: Harness;
@@ -152,7 +159,12 @@ describe.skipIf(!hasDatabase)('PostgresEventStore', () => {
     it('rejects an empty batch', async () => {
       await expect(
         h.ledger.withTransaction((tx) =>
-          tx.append({ streamId: uniqueStreamId(), streamType: 'order', expectedSeq: 0, events: [] }),
+          tx.append({
+            streamId: uniqueStreamId(),
+            streamType: 'order',
+            expectedSeq: 0,
+            events: [],
+          }),
         ),
       ).rejects.toThrow(LedgerError);
     });
@@ -433,10 +445,10 @@ describe.skipIf(!hasDatabase)('PostgresEventStore', () => {
 
       await expect(h.ledger.verifyStream(streamId)).resolves.toEqual({ valid: true });
 
-      await h.pool.query(
-        'UPDATE ledger_events SET payload = $1 WHERE stream_id = $2 AND seq = 2',
-        [JSON.stringify({ method: 'stolen-card' }), streamId],
-      );
+      await h.pool.query('UPDATE ledger_events SET payload = $1 WHERE stream_id = $2 AND seq = 2', [
+        JSON.stringify({ method: 'stolen-card' }),
+        streamId,
+      ]);
 
       await expect(h.ledger.verifyStream(streamId)).resolves.toEqual({
         valid: false,

@@ -8,7 +8,13 @@ export type {
   TransitionDefinition,
 } from './domain/fsm.types';
 
-export { canonicalise, canonicaliseEvent, chainHashes, hashEvent, verifyChain } from './domain/hash';
+export {
+  canonicalise,
+  canonicaliseEvent,
+  chainHashes,
+  hashEvent,
+  verifyChain,
+} from './domain/hash';
 export type { CanonicalisableEvent } from './domain/hash.types';
 
 export { decodeUlidTime, isUlid, monotonicUlidFactory, ulid } from './domain/ulid';

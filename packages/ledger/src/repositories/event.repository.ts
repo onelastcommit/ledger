@@ -153,7 +153,11 @@ export class EventRepository {
     return Number(result.rows[0]?.pending ?? 0);
   }
 
-  async findStreamIds(db: Queryable, afterStreamId: string | null, limit: number): Promise<string[]> {
+  async findStreamIds(
+    db: Queryable,
+    afterStreamId: string | null,
+    limit: number,
+  ): Promise<string[]> {
     const result = await db.query<{ stream_id: string }>(
       `SELECT DISTINCT stream_id
          FROM ledger_events

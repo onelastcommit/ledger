@@ -49,7 +49,9 @@ describe.skipIf(!hasDatabase)('maintenance and observability', () => {
       expect(firstPage.map((event) => event.seq)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
       const secondPage = await h.ledger.readStream(streamId, { afterSeq: 10, limit: 10 });
-      expect(secondPage.map((event) => event.seq)).toEqual([11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
+      expect(secondPage.map((event) => event.seq)).toEqual([
+        11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      ]);
 
       const lastPage = await h.ledger.readStream(streamId, { afterSeq: 20, limit: 10 });
       expect(lastPage.map((event) => event.seq)).toEqual([21, 22, 23, 24, 25]);
@@ -76,10 +78,10 @@ describe.skipIf(!hasDatabase)('maintenance and observability', () => {
 
       await expect(h.ledger.verifyStream(streamId)).resolves.toEqual({ valid: true });
 
-      await h.pool.query('UPDATE ledger_events SET payload = $1 WHERE stream_id = $2 AND seq = 1800', [
-        JSON.stringify({ tampered: true }),
-        streamId,
-      ]);
+      await h.pool.query(
+        'UPDATE ledger_events SET payload = $1 WHERE stream_id = $2 AND seq = 1800',
+        [JSON.stringify({ tampered: true }), streamId],
+      );
 
       await expect(h.ledger.verifyStream(streamId)).resolves.toEqual({
         valid: false,

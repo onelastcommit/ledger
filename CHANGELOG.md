@@ -33,6 +33,10 @@ the caveat that while on 0.x, minor versions may contain breaking changes.
 
 ### Changed
 
+- **Renamed to `@1percentlabs/ledger`.** The GitHub remote is unchanged.
+- Added `repository`, `homepage`, `bugs` and `publishConfig` metadata, required
+  before a first publish and for provenance attestation.
+
 - All subscriptions now share a single `LISTEN` connection, which reconnects with
   backoff on failure. Previously each subscription held a pooled client for its
   own listener, so N subscriptions permanently consumed N connections.

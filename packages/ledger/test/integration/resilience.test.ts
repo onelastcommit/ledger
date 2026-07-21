@@ -84,7 +84,12 @@ describe.skipIf(!hasDatabase)('resilience', () => {
       );
       const goodStreamId = uniqueStreamId();
       await h.ledger.withTransaction((tx) =>
-        tx.append({ streamId: goodStreamId, streamType: 'order', expectedSeq: 0, events: [placed] }),
+        tx.append({
+          streamId: goodStreamId,
+          streamType: 'order',
+          expectedSeq: 0,
+          events: [placed],
+        }),
       );
 
       const handled: string[] = [];
@@ -120,7 +125,9 @@ describe.skipIf(!hasDatabase)('resilience', () => {
           global_position: string;
           attempts: number;
           error: string;
-        }>('SELECT subscription_name, global_position, attempts, error FROM ledger_subscription_failures');
+        }>(
+          'SELECT subscription_name, global_position, attempts, error FROM ledger_subscription_failures',
+        );
         expect(failures.rows).toHaveLength(1);
         expect(failures.rows[0]).toMatchObject({
           subscription_name: 'poison-consumer',

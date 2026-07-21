@@ -1,7 +1,14 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { ProjectionFailedError } from '../../src/errors';
 import type { Projection } from '../../src/services/projection.types';
-import { createHarness, customer, hasDatabase, order, uniqueStreamId, type Harness } from './harness';
+import {
+  createHarness,
+  customer,
+  hasDatabase,
+  order,
+  uniqueStreamId,
+  type Harness,
+} from './harness';
 
 const ordersProjection: Projection = {
   name: 'orders',
@@ -74,7 +81,9 @@ describe.skipIf(!hasDatabase)('inline projections', () => {
       tx.append({ streamId, streamType: 'order', expectedSeq: 0, events: [placed] }),
     );
 
-    const rows = await h.pool.query('SELECT stream_id, status, total, updated_seq FROM read_orders');
+    const rows = await h.pool.query(
+      'SELECT stream_id, status, total, updated_seq FROM read_orders',
+    );
     expect(rows.rows).toEqual([
       { stream_id: streamId, status: 'OrderPlaced', total: '250', updated_seq: 1 },
     ]);

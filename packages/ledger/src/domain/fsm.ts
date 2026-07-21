@@ -61,10 +61,8 @@ export const defineEntity = (input: EntityDefinitionInput): EntityDefinition => 
   return { ...input, terminalStates };
 };
 
-export const isTerminalState = (
-  definition: EntityDefinition,
-  state: string | null,
-): boolean => state !== null && definition.terminalStates.has(state);
+export const isTerminalState = (definition: EntityDefinition, state: string | null): boolean =>
+  state !== null && definition.terminalStates.has(state);
 
 export const applyEvent = (
   definition: EntityDefinition,

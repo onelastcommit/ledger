@@ -29,9 +29,10 @@ const main = async (): Promise<void> => {
 
   console.log('state       ', await ledger.getState(orderId));
 
-  const summary = await pool.query('SELECT status, updated_seq FROM order_summary WHERE order_id = $1', [
-    orderId,
-  ]);
+  const summary = await pool.query(
+    'SELECT status, updated_seq FROM order_summary WHERE order_id = $1',
+    [orderId],
+  );
   console.log('read model  ', summary.rows[0]);
 
   console.log('audit trail ');
@@ -42,7 +43,9 @@ const main = async (): Promise<void> => {
         : event.actor.kind === 'service'
           ? `service ${event.actor.id}`
           : event.actor.kind;
-    console.log(`   seq ${event.seq}  ${event.type.padEnd(14)} by ${who.padEnd(24)} at ${event.occurredAt}`);
+    console.log(
+      `   seq ${event.seq}  ${event.type.padEnd(14)} by ${who.padEnd(24)} at ${event.occurredAt}`,
+    );
   }
 
   console.log('tamper check', await ledger.verifyStream(orderId));
@@ -50,7 +53,12 @@ const main = async (): Promise<void> => {
   try {
     await shipOrder(orderId, warehouse);
   } catch (error) {
-    console.log('re-ship     ', (error as Error).constructor.name, '->', error instanceof InvalidTransitionError);
+    console.log(
+      're-ship     ',
+      (error as Error).constructor.name,
+      '->',
+      error instanceof InvalidTransitionError,
+    );
   }
 
   await new Promise((resolve) => setTimeout(resolve, 600));

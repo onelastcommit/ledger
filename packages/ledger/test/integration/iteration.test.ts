@@ -1,6 +1,13 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { StoredEvent } from '../../src/types';
-import { createHarness, customer, hasDatabase, order, uniqueStreamId, type Harness } from './harness';
+import {
+  createHarness,
+  customer,
+  hasDatabase,
+  order,
+  uniqueStreamId,
+  type Harness,
+} from './harness';
 
 describe.skipIf(!hasDatabase)('streaming iteration', () => {
   let h: Harness;

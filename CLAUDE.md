@@ -30,6 +30,10 @@ These are non-negotiable and have been reiterated by the user:
 - **No enums.** Use string-literal unions or `as const` objects.
 - **Conventional commits**, small and logical. Co-author trailer on every commit.
 - **`pnpm lint` runs with `--max-warnings=0`.** Warnings fail the build.
+- **Prettier owns formatting.** `.prettierrc.json` declares the style the code
+  already used (single quotes, 100 columns). Never hand-format against it, and
+  never argue with it in ESLint — `eslint-config-prettier` disables the
+  overlapping rules. `pnpm format` fixes, `pnpm format:check` gates CI.
 
 ## Architecture
 
@@ -59,7 +63,7 @@ Types live in co-located `*.types.ts` files next to what they describe.
 **`migration-loader.ts` must stay at `src/` root.** It resolves
 `./migrations/${name}` against `import.meta.url`. tsup bundles everything into a
 single `dist/index.js`, so at runtime `import.meta.url` is `dist/`. Only a module
-that sits at the source root resolves correctly in *both* dev (`src/migrations/`)
+that sits at the source root resolves correctly in _both_ dev (`src/migrations/`)
 and bundled (`dist/migrations/`) layouts. Moving it into a subdirectory silently
 breaks `migrate()` for installed consumers.
 
@@ -111,15 +115,15 @@ connection-per-subscription problem the hub exists to solve.
 
 ## Decisions already made — do not re-litigate
 
-| Decision | Why | Revisit when |
-| --- | --- | --- |
-| Raw SQL, no ORM | Prisma owns the connection, which breaks the caller-owned-transaction guarantee the library exists to provide. It also cannot do `LISTEN`/`NOTIFY`. | — |
-| **Kysely over Prisma if an abstraction is ever wanted** | Kysely can `.compile()` to `{ sql, parameters }` executed on *your* client, so shared transactions survive. Evaluated and deferred: 5 tables, ~14 queries, and `repositories/columns.ts` already makes a rename a compile error. | The schema passes ~10 tables, or application code starts writing ad-hoc queries against these tables. |
-| No zod | Payloads are deliberately opaque — that is what makes the library domain-agnostic. The only validation surface is entity definitions, already hand-checked at startup. Adding it costs the zero-dependency property. | Consumers want to declare payload schemas per event type. That is a feature, not a refactor. |
-| No DI container (tsyringe et al.) | One composition root. `reflect-metadata` plus decorators to replace ~20 lines of explicit wiring in `createLedger`. | Many composition roots, or runtime-swapped implementations. |
-| `singleRunner` defaults to **off** | Delivery is at-least-once, so handlers must be idempotent regardless; exclusivity is an optimisation that trades liveness for it. Defaulting it on would silently make consumers dormant during a listener blip. | — |
-| `deadLetterPolicy` defaults to `'skip'` | The event is never lost — it stays in `ledger_events` and the failure is recorded — so skipping is recoverable, whereas stopping blocks the consumer. | — |
-| Runtime dependency: `pg` only | It is the library's headline property. | Only with the user's explicit agreement. |
+| Decision                                                | Why                                                                                                                                                                                                                              | Revisit when                                                                                          |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Raw SQL, no ORM                                         | Prisma owns the connection, which breaks the caller-owned-transaction guarantee the library exists to provide. It also cannot do `LISTEN`/`NOTIFY`.                                                                              | —                                                                                                     |
+| **Kysely over Prisma if an abstraction is ever wanted** | Kysely can `.compile()` to `{ sql, parameters }` executed on _your_ client, so shared transactions survive. Evaluated and deferred: 5 tables, ~14 queries, and `repositories/columns.ts` already makes a rename a compile error. | The schema passes ~10 tables, or application code starts writing ad-hoc queries against these tables. |
+| No zod                                                  | Payloads are deliberately opaque — that is what makes the library domain-agnostic. The only validation surface is entity definitions, already hand-checked at startup. Adding it costs the zero-dependency property.             | Consumers want to declare payload schemas per event type. That is a feature, not a refactor.          |
+| No DI container (tsyringe et al.)                       | One composition root. `reflect-metadata` plus decorators to replace ~20 lines of explicit wiring in `createLedger`.                                                                                                              | Many composition roots, or runtime-swapped implementations.                                           |
+| `singleRunner` defaults to **off**                      | Delivery is at-least-once, so handlers must be idempotent regardless; exclusivity is an optimisation that trades liveness for it. Defaulting it on would silently make consumers dormant during a listener blip.                 | —                                                                                                     |
+| `deadLetterPolicy` defaults to `'skip'`                 | The event is never lost — it stays in `ledger_events` and the failure is recorded — so skipping is recoverable, whereas stopping blocks the consumer.                                                                            | —                                                                                                     |
+| Runtime dependency: `pg` only                           | It is the library's headline property.                                                                                                                                                                                           | Only with the user's explicit agreement.                                                              |
 
 ## Workflows
 

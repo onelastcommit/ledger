@@ -4,11 +4,7 @@ import type { SubscriptionRepository } from '../repositories/subscription.reposi
 import type { ReadAllOptions, StoredEvent } from '../types';
 import type { NotificationHub } from './notification-hub';
 import type { StreamReaderService } from './stream-reader.service';
-import type {
-  Subscription,
-  SubscriptionOptions,
-  SubscriptionStatus,
-} from './subscription.types';
+import type { Subscription, SubscriptionOptions, SubscriptionStatus } from './subscription.types';
 
 const DEFAULT_BATCH_SIZE = 100;
 const DEFAULT_POLL_INTERVAL_MS = 1000;
@@ -264,7 +260,8 @@ class SubscriptionRunner implements Subscription {
     try {
       await this.hub.ensureConnected();
       await this.repository.ensure(this.pool, this.name, this.startPosition);
-      this.cursor = (await this.repository.findPosition(this.pool, this.name)) ?? this.startPosition;
+      this.cursor =
+        (await this.repository.findPosition(this.pool, this.name)) ?? this.startPosition;
     } catch (error) {
       this.onError(error);
     }

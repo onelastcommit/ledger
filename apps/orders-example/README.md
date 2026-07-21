@@ -6,11 +6,11 @@ ships.
 
 It demonstrates the four things you will actually write:
 
-| File | Shows |
-| --- | --- |
-| `src/ledger.ts` | Wiring the pool, entity definition and inline projection once, at startup. |
-| `src/orders.service.ts` | Appending with `expectedSeq` and retrying on `VersionConflictError`. |
-| `src/main.ts` | The read model committing atomically, the audit trail, hash verification, a rejected illegal transition, and a subscription used for fan-out. |
+| File                    | Shows                                                                                                                                         |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/ledger.ts`         | Wiring the pool, entity definition and inline projection once, at startup.                                                                    |
+| `src/orders.service.ts` | Appending with `expectedSeq` and retrying on `VersionConflictError`.                                                                          |
+| `src/main.ts`           | The read model committing atomically, the audit trail, hash verification, a rejected illegal transition, and a subscription used for fan-out. |
 
 This app is a member of the workspace, so `pnpm -r typecheck` compiles it
 against the library on every CI run — it cannot drift out of date.

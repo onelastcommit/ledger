@@ -29,9 +29,9 @@ export const fakeEventRepository = (state: FakeState): EventRepository =>
       const recordedAt = new Date(0).toISOString();
       return Promise.resolve(
         events.map((event) => {
-        state.events.push(event);
-        const globalPosition = state.nextGlobalPosition;
-        state.nextGlobalPosition += 1;
+          state.events.push(event);
+          const globalPosition = state.nextGlobalPosition;
+          state.nextGlobalPosition += 1;
           return { seq: event.seq, globalPosition, recordedAt };
         }),
       );

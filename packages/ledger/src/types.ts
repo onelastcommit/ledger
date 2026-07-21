@@ -8,7 +8,8 @@ export interface SourceRef {
   [key: string]: string | number;
 }
 
-export type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
+export type JsonValue =
+  string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 export interface EventInput<P = unknown> {
   type: string;

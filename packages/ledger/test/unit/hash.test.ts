@@ -48,7 +48,7 @@ describe('canonicalise', () => {
   });
 
   it('handles unicode and escaping deterministically', () => {
-    expect(canonicalise({ 'ä': 'ø', 'z': '“quoted”' })).toBe(canonicalise({ 'z': '“quoted”', 'ä': 'ø' }));
+    expect(canonicalise({ ä: 'ø', z: '“quoted”' })).toBe(canonicalise({ z: '“quoted”', ä: 'ø' }));
     expect(canonicalise('naïve')).toBe('"naïve"');
     expect(canonicalise('tab\there')).toBe('"tab\\there"');
     expect(canonicalise({ '😀': 1 })).toBe('{"😀":1}');
@@ -194,7 +194,9 @@ describe('verifyChain', () => {
   });
 
   it('reports the first seq whose stored hash was altered', () => {
-    const tampered = chain.map((event) => (event.seq === 1 ? { ...event, hash: 'deadbeef' } : event));
+    const tampered = chain.map((event) =>
+      event.seq === 1 ? { ...event, hash: 'deadbeef' } : event,
+    );
     expect(verifyChain(tampered)).toEqual({ valid: false, firstBadSeq: 1 });
   });
 

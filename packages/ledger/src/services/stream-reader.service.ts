@@ -53,10 +53,7 @@ export class StreamReaderService {
     }
   }
 
-  async *iterateAll(
-    db: Queryable,
-    options: IterateAllOptions = {},
-  ): AsyncGenerator<StoredEvent[]> {
+  async *iterateAll(db: Queryable, options: IterateAllOptions = {}): AsyncGenerator<StoredEvent[]> {
     const batchSize = options.batchSize ?? DEFAULT_READ_LIMIT;
     let afterGlobalPosition = options.afterGlobalPosition ?? 0;
 
