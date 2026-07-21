@@ -125,9 +125,10 @@ connection-per-subscription problem the hub exists to solve.
 
 ```bash
 nvm use && corepack enable && pnpm install
+pnpm build         # ALWAYS FIRST. apps/orders-example resolves the library
+                   # through its built types, so both lint and typecheck
+                   # produce error-typed nonsense if dist/ is missing.
 pnpm lint          # --max-warnings=0
-pnpm build         # must run BEFORE typecheck: apps/orders-example
-                   # resolves the library through its built types
 pnpm typecheck
 pnpm test          # unit, then integration
 ```
