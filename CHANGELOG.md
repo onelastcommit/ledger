@@ -7,6 +7,10 @@ the caveat that while on 0.x, minor versions may contain breaking changes.
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.1.2] — 2026-07-21
+
 ### Added
 
 - Four type helpers for reading types back out of an entity definition:
