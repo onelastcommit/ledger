@@ -152,6 +152,32 @@ events you care about and leave the rest.
 `ledger.entity()` is additive. `tx.append({ streamType, ... })` still works
 exactly as before if you would rather not use it.
 
+### Deriving types from a definition
+
+Four helpers read the types back out, so you never have to restate them. Each
+accepts either the definition or the `ledger.entity()` handle.
+
+```ts
+import type { EventsOf, EventTypeOf, PayloadOf, PayloadsOf } from '@1percentlabs/ledger';
+
+type OrderEvent = EventsOf<typeof order>;
+// { type: 'OrderPlaced'; payload: { total: number; currency: string }; actor: Actor; ... }
+//   | { type: 'OrderPaid'; payload: { method: 'card' | 'cash' }; ... } | ...
+
+type OrderEventType = EventTypeOf<typeof order>;
+// 'OrderPlaced' | 'OrderPaid' | 'OrderShipped'
+
+type PaidPayload = PayloadOf<typeof order, 'OrderPaid'>;
+// { method: 'card' | 'cash' }
+
+type OrderPayloads = PayloadsOf<typeof order>;
+// { OrderPlaced: { total: number; currency: string }; OrderPaid: ...; OrderShipped: unknown }
+```
+
+`EventsOf` is the one you want most of the time — it is the discriminated union
+of everything `append` accepts, which makes it the natural parameter type for a
+function that builds an event.
+
 ## API
 
 ### `createLedger(config)`

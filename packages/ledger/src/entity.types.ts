@@ -31,6 +31,18 @@ export interface TypedAppendParams<Payloads> {
 
 export type AppendTarget = LedgerTransaction | ClientBase;
 
+export type PayloadsOf<D> = D extends { readonly definition: { readonly __payloads?: infer P } }
+  ? NonNullable<P>
+  : D extends { readonly __payloads?: infer P }
+    ? NonNullable<P>
+    : never;
+
+export type EventTypeOf<D> = keyof PayloadsOf<D> & string;
+
+export type PayloadOf<D, K extends EventTypeOf<D>> = PayloadsOf<D>[K];
+
+export type EventsOf<D> = TypedEvent<PayloadsOf<D>>;
+
 export interface EntityLedger<Payloads> {
   readonly definition: EntityDefinition<Payloads>;
   readonly streamType: string;

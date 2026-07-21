@@ -48,11 +48,16 @@ These are non-negotiable and have been reiterated by the user:
 
 ## Architecture
 
+This is a pnpm workspace. The library is `packages/ledger/`; every `src/` path
+below is relative to it. `apps/orders-example/` is the only other workspace.
+
 ```
-src/
+packages/ledger/src/
   ledger.ts              composition root — wires repositories into services
   ledger.types.ts        Ledger, LedgerConfig, LedgerTransaction
   types.ts               public event envelope types
+  entity.ts              ledger.entity(def) — the typed append handle
+  entity.types.ts        EntityLedger, TypedEvent, EventsOf and friends
   errors.ts              LedgerError hierarchy
   migration-loader.ts    MUST stay at src root — see gotchas
   domain/                pure: fsm, hash, ulid. No database, no clock.
@@ -173,12 +178,12 @@ see `.claude/skills/`.
 
 ## Known gaps
 
-- **Deriving the event union is awkward for consumers.** Today it is
-  `Parameters<typeof orders.append>[1]['events'][number]` or
-  `NonNullable<(typeof order)['__payloads']>`. An exported `EventsOf<typeof def>`
-  helper would be a cheap, worthwhile 0.1.2.
 - The `__payloads` phantom property is visible on the public `EntityDefinition`
-  type. It works, but a branded unique symbol would be tidier.
+  type. It works, but a branded unique symbol would be tidier. Note that
+  `PayloadsOf` reads `__payloads` **structurally**, not through
+  `D extends EntityDefinition<infer P>` — that form infers `P | undefined` off
+  the optional property. If `__payloads` is ever rebranded, `PayloadsOf` is the
+  thing that breaks, and it breaks silently into `never`.
 - Typed payloads cover `append`. Reads still return `StoredEvent<unknown>`; a
   typed `readStream` that narrows by event type is the natural next step.
 - `apps/` holds only the example. The docs site remains a deliberate non-goal.

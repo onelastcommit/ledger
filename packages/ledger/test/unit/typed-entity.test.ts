@@ -1,7 +1,14 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
 import { defineEntity, payloadOf } from '../../src/domain/fsm';
 import type { EventPayloads } from '../../src/domain/fsm.types';
-import type { TypedEvent } from '../../src/entity.types';
+import type {
+  EntityLedger,
+  EventsOf,
+  EventTypeOf,
+  PayloadOf,
+  PayloadsOf,
+  TypedEvent,
+} from '../../src/entity.types';
 
 const order = defineEntity({
   streamType: 'order',
@@ -98,6 +105,35 @@ describe('typed entity payloads', () => {
   it('rejects an event type the entity does not declare', () => {
     // @ts-expect-error OrderTeleported is not an event of this entity
     const type: OrderEvent['type'] = 'OrderTeleported';
+    expect(type).toBe('OrderTeleported');
+  });
+
+  it('derives the event union from the definition', () => {
+    expectTypeOf<EventsOf<typeof order>>().toEqualTypeOf<OrderEvent>();
+  });
+
+  it('derives the event union from the entity ledger', () => {
+    type OrderLedger = EntityLedger<Payloads>;
+    expectTypeOf<EventsOf<OrderLedger>>().toEqualTypeOf<OrderEvent>();
+    expectTypeOf<PayloadsOf<OrderLedger>>().toEqualTypeOf<Payloads>();
+  });
+
+  it('derives the payload map and event names', () => {
+    expectTypeOf<PayloadsOf<typeof order>>().toEqualTypeOf<Payloads>();
+    expectTypeOf<EventTypeOf<typeof order>>().toEqualTypeOf<
+      'OrderPlaced' | 'OrderPaid' | 'OrderShipped' | 'OrderCancelled'
+    >();
+  });
+
+  it('derives a single event payload by name', () => {
+    expectTypeOf<PayloadOf<typeof order, 'OrderPaid'>>().toEqualTypeOf<{
+      method: 'card' | 'cash';
+    }>();
+  });
+
+  it('rejects an event name the entity does not declare', () => {
+    // @ts-expect-error OrderTeleported is not an event of this entity
+    const type: EventTypeOf<typeof order> = 'OrderTeleported';
     expect(type).toBe('OrderTeleported');
   });
 

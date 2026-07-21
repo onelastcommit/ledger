@@ -1,5 +1,11 @@
 import pg from 'pg';
-import { createLedger, defineEntity, payloadOf, type Projection } from '@1percentlabs/ledger';
+import {
+  createLedger,
+  defineEntity,
+  payloadOf,
+  type EventsOf,
+  type Projection,
+} from '@1percentlabs/ledger';
 
 export const order = defineEntity({
   streamType: 'order',
@@ -48,7 +54,7 @@ export const ledger = createLedger({
 
 export const orders = ledger.entity(order);
 
-export type OrderEvent = Parameters<typeof orders.append>[1]['events'][number];
+export type OrderEvent = EventsOf<typeof order>;
 
 export const setupReadModel = async (): Promise<void> => {
   await pool.query(`

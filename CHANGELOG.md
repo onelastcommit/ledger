@@ -7,7 +7,14 @@ the caveat that while on 0.x, minor versions may contain breaking changes.
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- Four type helpers for reading types back out of an entity definition:
+  `EventsOf<D>` (the discriminated union `append` accepts), `EventTypeOf<D>`
+  (the event names), `PayloadOf<D, K>` (one event's payload) and `PayloadsOf<D>`
+  (the whole map). Each accepts either the definition or the `ledger.entity()`
+  handle. This replaces `Parameters<typeof orders.append>[1]['events'][number]`,
+  which worked but read badly. Type-level only, no runtime change.
 
 ## [0.1.1] — 2026-07-21
 

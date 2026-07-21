@@ -13,6 +13,10 @@ export type {
 export type {
   AppendTarget,
   EntityLedger,
+  EventsOf,
+  EventTypeOf,
+  PayloadOf,
+  PayloadsOf,
   TypedAppendParams,
   TypedEvent,
   TypedEventInput,
