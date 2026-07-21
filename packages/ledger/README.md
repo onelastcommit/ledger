@@ -263,6 +263,8 @@ pnpm test:integration  # Docker (testcontainers), or DATABASE_URL
 
 Integration tests provision `postgres:16-alpine` via testcontainers. Without Docker, set `DATABASE_URL` to point at a scratch database — it is `TRUNCATE`d between tests. With neither, they skip with an explanatory message rather than failing.
 
+The published package targets Node 20, but the toolchain needs Node 22 or newer, because pnpm 11 depends on `node:sqlite`.
+
 ## Licence
 
 MIT
