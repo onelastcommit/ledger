@@ -7,7 +7,7 @@ An append-only event store for PostgreSQL with first-class **provenance** — ev
 It is a library, not a server: no broker, no daemon, no domain opinions. The event log itself is the durable queue.
 
 - **Runtime dependencies:** `pg`, and nothing else.
-- **Requires:** Node >= 22, PostgreSQL >= 14. ESM only.
+- **Requires:** Node >= 24, PostgreSQL >= 14. ESM only.
 
 ## Install
 
@@ -152,7 +152,15 @@ await ledger.append(client, {
 
 ### `ledger.readStream(streamId, options?)`
 
-Every event in the stream, in `seq` order. Returns `[]` for an unknown stream. Pass `{ client }` to read inside an open transaction.
+Events in `seq` order. Returns `[]` for an unknown stream.
+
+```ts
+await ledger.readStream(orderId);                          // whole stream
+await ledger.readStream(orderId, { afterSeq: 100, limit: 50 });  // one page
+await ledger.readStream(orderId, { client });              // inside a transaction
+```
+
+Page long streams with `afterSeq`/`limit` rather than loading them whole.
 
 ### `ledger.readAll(options?)`
 
@@ -168,7 +176,29 @@ await ledger.readAll({ afterGlobalPosition: 0, streamTypes: ['order'], limit: 50
 
 ### `ledger.verifyStream(streamId)`
 
-Recomputes the hash chain from seq 1 and returns `{ valid: true }` or `{ valid: false, firstBadSeq }`.
+Recomputes the hash chain from seq 1 and returns `{ valid: true }` or `{ valid: false, firstBadSeq }`. Walks the stream in batches, so verifying a long stream does not load it into memory.
+
+### `ledger.rebuildStream(streamId)` and `ledger.rebuildAllStreams()`
+
+`ledger_streams` is a cache, always derivable from the log. These replay the
+events to recompute `last_seq`, `state` and `last_hash`, and report whether the
+cached row disagreed:
+
+```ts
+await ledger.rebuildStream('order:1001');
+// { streamId, streamType, lastSeq, state, changed: false }
+
+await ledger.rebuildAllStreams();
+// { streams: 412, changed: 0, details: [...] }
+```
+
+Use after restoring a partial backup, or if you suspect drift. A rebuilt row
+restores appendability: the recovered `last_hash` lets the chain continue.
+
+### `ledger.close()`
+
+Releases the shared notification listener. Stop your subscriptions first. The
+pool is yours to end.
 
 ### `ledger.subscribe(options)`
 
@@ -198,6 +228,18 @@ subscription.position();         // last committed cursor
 subscription.isActive();         // false while waiting for the singleRunner lock
 await subscription.stop();
 ```
+
+**Monitoring.** `status()` is the thing to alert on:
+
+```ts
+await subscription.status();
+// { name, position, headPosition, lag, active, deadLettered }
+```
+
+`lag` is an exact count of events this subscription has yet to consume — not a
+position arithmetic, so it stays accurate when other stream types interleave.
+A rising `lag` means a stalled consumer; a non-zero `deadLettered` means events
+were given up on and are recorded in `ledger_subscription_failures`.
 
 **Failure handling.** A throwing handler is retried with exponential backoff and
 full jitter. Once `maxRetries` is exhausted the event is written to
@@ -278,7 +320,7 @@ Three tables. `ledger_events` is the log; the other two are derivable from it.
 - **`globalPosition` is a `BIGSERIAL` read into a JavaScript number.** Exact below 2^53; beyond roughly nine quadrillion events you would need a `bigint`.
 - **The events table is append-only.** Nothing in this library issues `UPDATE` or `DELETE` against it. To have the database enforce that, `REVOKE UPDATE, DELETE, TRUNCATE ON ledger_events` from your application role — see the comment at the top of `001_init.sql`.
 - **Very large appends are chunked, not rejected.** Postgres binds at most 65,535 parameters per statement, so batches above 5,957 events are split across statements inside the same transaction. Atomicity is unaffected.
-- **`readStream` and `verifyStream` load a whole stream into memory.** Comfortable for thousands of events; consider partitioning your streams before hundreds of thousands.
+- **Long streams should be paged.** `readStream` takes `afterSeq`/`limit`, and `verifyStream` walks in batches internally. `readAll` still returns a whole batch in memory, bounded by `limit`.
 
 ## Example
 
@@ -316,7 +358,7 @@ pnpm test:integration  # Docker (testcontainers), or DATABASE_URL
 
 Integration tests provision `postgres:16-alpine` via testcontainers. Without Docker, set `DATABASE_URL` to point at a scratch database — it is `TRUNCATE`d between tests. With neither, they skip with an explanatory message rather than failing.
 
-Use the Node version in `.nvmrc` (24 LTS) — `nvm use`. The package itself supports Node 22 and above.
+Use the Node version in `.nvmrc` (24 LTS) — `nvm use`.
 
 ## Licence
 
