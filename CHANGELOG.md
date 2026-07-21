@@ -7,48 +7,65 @@ the caveat that while on 0.x, minor versions may contain breaking changes.
 
 ## [Unreleased]
 
-### Added
+Nothing yet.
 
-- Catch-up subscriptions retry failed handlers with exponential backoff and full
-  jitter, then dead-letter to `ledger_subscription_failures` and move on. Set
-  `deadLetterPolicy: 'stop'` to halt at the offending event instead. Previously a
-  handler that always threw blocked its subscription forever.
+## [0.1.0] — 2026-07-21
+
+First release. An append-only event log on plain PostgreSQL with first-class
+provenance, per-entity state machines validated inside the append transaction,
+per-stream hash chaining, inline projections and catch-up subscriptions.
+
+### Core
+
+- `createLedger({ pool, entities, projections })` runs in-process on a caller's
+  `pg.Pool`. Appends join the caller's transaction, so read models commit
+  atomically with the events that produced them.
+- `expectedSeq` is mandatory on append, enforced by `UNIQUE (stream_id, seq)`
+  rather than by locking, so optimistic concurrency holds regardless of
+  isolation level or code path.
+- State machines are validated at write time. An illegal transition is not
+  reported after the fact; it cannot be persisted. Stream types with no
+  definition behave as pure logs.
+- Every event is hash-chained — `sha256(prevHash + canonical(event))` — making
+  the log tamper-evident. `verifyStream` reports the first divergent seq.
+- Provenance is structural: `actor` (who), `source` (whence), and `occurredAt`
+  (business time) as distinct from `recordedAt` (audit time).
+
+### Consumption
+
+- Inline projections run inside the append transaction; a failure rolls the
+  append back.
+- Catch-up subscriptions hold a durable cursor in `ledger_subscriptions`, woken
+  promptly by `LISTEN`/`NOTIFY` but correct on polling alone. At-least-once
+  delivery, so handlers must be idempotent.
+- Handlers retry with exponential backoff and full jitter, then dead-letter to
+  `ledger_subscription_failures` and move on. `deadLetterPolicy: 'stop'` halts at
+  the offending event instead. Nothing is lost either way — the event remains in
+  the log and replays by rewinding the cursor.
+- All subscriptions on a ledger share one `LISTEN` connection, which reconnects
+  with backoff. Pool size need not scale with subscription count.
 - `singleRunner: true` takes a Postgres advisory lock so only one runner per
-  subscription name is active, with automatic handover when the holder stops.
-  Off by default; duplicates are already expected under at-least-once delivery.
-- `ledger.close()` releases the shared notification listener.
-- `readStream` accepts `afterSeq` and `limit`, and `verifyStream` walks the chain
-  in batches, so neither loads an entire stream into memory.
-- `ledger.rebuildStream()` and `ledger.rebuildAllStreams()` recompute the
-  `ledger_streams` cache by replaying the log, reporting which rows disagreed.
-  The cache was always described as derivable; now it is actually recoverable.
-- `ledger.iterateAll()` and `ledger.iterateStream()` are async generators yielding
-  batches, so the whole log can be walked without holding it in memory.
+  subscription name is active, with automatic handover. Off by default, since
+  duplicates are already expected under at-least-once delivery.
 - `subscription.status()` reports `position`, `headPosition`, `lag`, `active` and
   `deadLettered`. `lag` is an exact count of pending events rather than position
   arithmetic, so it stays accurate when stream types interleave.
-- `apps/orders-example`, a worked order-lifecycle app typechecked against the
-  library on every CI run.
-- Migration `002_subscription_failures.sql`.
 
-### Changed
+### Reading and recovery
 
-- **Renamed to `@1percentlabs/ledger`.** The GitHub remote is unchanged.
-- Added `repository`, `homepage`, `bugs` and `publishConfig` metadata, required
-  before a first publish and for provenance attestation.
+- `readStream` accepts `afterSeq` and `limit`; `verifyStream` walks the chain in
+  batches. Neither loads an entire stream into memory.
+- `iterateAll` and `iterateStream` are async generators yielding batches, for
+  walking more than fits in memory.
+- `rebuildStream` and `rebuildAllStreams` recompute the `ledger_streams` cache by
+  replaying the log. The cache was always derivable in principle; these make it
+  recoverable in practice.
+- Appends larger than one statement can bind are chunked within the same
+  transaction, so Postgres's 65,535 bind-parameter limit is not a cap on batch
+  size.
 
-- All subscriptions now share a single `LISTEN` connection, which reconnects with
-  backoff on failure. Previously each subscription held a pooled client for its
-  own listener, so N subscriptions permanently consumed N connections.
-- Appends larger than one statement can bind are chunked automatically within the
-  same transaction. Batches over 5,957 events previously failed with an opaque
-  driver error on Postgres's 65,535 bind-parameter limit.
-- Column names are declared once and the row types derived from them, so a rename
-  is a compile error rather than a silent mismatch.
-- Node 24 is now the minimum supported version, matching `.nvmrc` and CI.
+### Notes
 
-## [0.1.0] — unreleased
-
-Initial implementation: append-only event log with provenance, per-entity state
-machines validated inside the append transaction, per-stream hash chaining,
-inline projections and catch-up subscriptions.
+- Runtime dependencies: `pg` only. Node >= 24, PostgreSQL >= 14, ESM only.
+- Published without provenance attestation; the first release predated trusted
+  publishing being configurable for the package.
