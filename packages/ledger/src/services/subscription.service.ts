@@ -1,9 +1,14 @@
 import type { Pool } from 'pg';
+import type { EventRepository } from '../repositories/event.repository';
 import type { SubscriptionRepository } from '../repositories/subscription.repository';
 import type { ReadAllOptions, StoredEvent } from '../types';
 import type { NotificationHub } from './notification-hub';
 import type { StreamReaderService } from './stream-reader.service';
-import type { Subscription, SubscriptionOptions } from './subscription.types';
+import type {
+  Subscription,
+  SubscriptionOptions,
+  SubscriptionStatus,
+} from './subscription.types';
 
 const DEFAULT_BATCH_SIZE = 100;
 const DEFAULT_POLL_INTERVAL_MS = 1000;
@@ -36,6 +41,7 @@ type HandleOutcome = 'handled' | 'dead-lettered' | 'aborted';
 export interface SubscriptionServiceDeps {
   pool: Pool;
   reader: StreamReaderService;
+  events: EventRepository;
   subscriptions: SubscriptionRepository;
   hub: NotificationHub;
 }
@@ -45,6 +51,7 @@ class SubscriptionRunner implements Subscription {
 
   private readonly pool: Pool;
   private readonly reader: StreamReaderService;
+  private readonly events: EventRepository;
   private readonly repository: SubscriptionRepository;
   private readonly hub: NotificationHub;
   private readonly options: SubscriptionOptions;
@@ -73,6 +80,7 @@ class SubscriptionRunner implements Subscription {
     this.name = options.name;
     this.pool = deps.pool;
     this.reader = deps.reader;
+    this.events = deps.events;
     this.repository = deps.subscriptions;
     this.hub = deps.hub;
     this.options = options;
@@ -112,6 +120,23 @@ class SubscriptionRunner implements Subscription {
     return this.caughtUpSignal;
   }
 
+  async status(): Promise<SubscriptionStatus> {
+    const streamTypes = this.options.streamTypes ?? null;
+    const [headPosition, lag, deadLettered] = await Promise.all([
+      this.events.maxGlobalPosition(this.pool, streamTypes),
+      this.events.countPending(this.pool, this.cursor, streamTypes),
+      this.repository.countFailures(this.pool, this.name),
+    ]);
+    return {
+      name: this.name,
+      position: this.cursor,
+      headPosition,
+      lag,
+      active: this.active,
+      deadLettered,
+    };
+  }
+
   private isStopped(): boolean {
     return this.stopped;
   }
@@ -139,7 +164,6 @@ class SubscriptionRunner implements Subscription {
   private backoffFor(attempt: number): number {
     const exponential = this.retryBaseMs * 2 ** (attempt - 1);
     const capped = Math.min(exponential, this.retryMaxDelayMs);
-    // Full jitter, so competing consumers do not retry in lockstep.
     return Math.round(capped * (0.5 + Math.random() * 0.5));
   }
 
@@ -216,7 +240,6 @@ class SubscriptionRunner implements Subscription {
       const outcome = await this.handleWithRetry(event);
       if (outcome === 'aborted') break;
       if (outcome === 'dead-lettered' && this.options.deadLetterPolicy === 'stop') {
-        // Commit everything before the poison event so a restart resumes on it.
         if (handledUpTo !== undefined) await this.commit(handledUpTo);
         this.stopped = true;
         return false;

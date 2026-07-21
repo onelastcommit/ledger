@@ -1,7 +1,3 @@
--- Events a subscriber could not handle after exhausting its retries. The event
--- itself is never lost: it stays in ledger_events, and this table records where
--- a consumer gave up so the batch can be replayed by rewinding its cursor.
-
 CREATE TABLE IF NOT EXISTS ledger_subscription_failures (
   id                BIGSERIAL PRIMARY KEY,
   subscription_name TEXT        NOT NULL,

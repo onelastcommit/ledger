@@ -44,6 +44,14 @@ export class SubscriptionRepository {
     );
   }
 
+  async countFailures(db: Queryable, name: string): Promise<number> {
+    const result = await db.query<{ count: string }>(
+      'SELECT count(*)::text AS count FROM ledger_subscription_failures WHERE subscription_name = $1',
+      [name],
+    );
+    return Number(result.rows[0]?.count ?? 0);
+  }
+
   async tryAcquireLock(db: Queryable, namespace: number, key: number): Promise<boolean> {
     const result = await db.query<{ locked: boolean }>(
       'SELECT pg_try_advisory_lock($1::int, $2::int) AS locked',

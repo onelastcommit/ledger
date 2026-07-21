@@ -42,6 +42,11 @@ export interface AppendParams {
   events: EventInput[];
 }
 
+export interface ReadStreamOptions {
+  afterSeq?: number;
+  limit?: number;
+}
+
 export interface ReadAllOptions {
   afterGlobalPosition?: number;
   streamTypes?: string[];

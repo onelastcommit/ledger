@@ -60,6 +60,11 @@ export interface InsertedEventRow {
   recordedAt: string;
 }
 
+export interface StreamPage {
+  afterSeq?: number;
+  limit?: number;
+}
+
 export interface ReadAllQuery {
   afterGlobalPosition: number;
   streamTypes: string[] | null;

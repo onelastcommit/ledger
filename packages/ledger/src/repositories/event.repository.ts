@@ -6,6 +6,7 @@ import type {
   InsertedEventRow,
   Queryable,
   ReadAllQuery,
+  StreamPage,
 } from './repository.types';
 
 const SELECT_COLUMNS = selectList(EVENT_COLUMN_MAP);
@@ -96,12 +97,72 @@ export class EventRepository {
     return inserted;
   }
 
-  async findByStream(db: Queryable, streamId: string): Promise<StoredEvent[]> {
+  async findByStream(
+    db: Queryable,
+    streamId: string,
+    page: StreamPage = {},
+  ): Promise<StoredEvent[]> {
+    const conditions = ['stream_id = $1', 'seq > $2'];
+    const values: unknown[] = [streamId, page.afterSeq ?? 0];
+    if (page.limit !== undefined) {
+      values.push(page.limit);
+      return this.selectStream(db, conditions, values, `LIMIT $${values.length}`);
+    }
+    return this.selectStream(db, conditions, values, '');
+  }
+
+  private async selectStream(
+    db: Queryable,
+    conditions: string[],
+    values: unknown[],
+    tail: string,
+  ): Promise<StoredEvent[]> {
     const result = await db.query<EventRow>(
-      `SELECT ${SELECT_COLUMNS} FROM ledger_events WHERE stream_id = $1 ORDER BY seq ASC`,
-      [streamId],
+      `SELECT ${SELECT_COLUMNS}
+         FROM ledger_events
+        WHERE ${conditions.join(' AND ')}
+        ORDER BY seq ASC
+        ${tail}`,
+      values,
     );
     return result.rows.map(toStoredEvent);
+  }
+
+  async maxGlobalPosition(db: Queryable, streamTypes: string[] | null = null): Promise<number> {
+    const result = await db.query<{ head: string | null }>(
+      `SELECT max(global_position)::text AS head
+         FROM ledger_events
+        WHERE ($1::text[] IS NULL OR stream_type = ANY($1::text[]))`,
+      [streamTypes],
+    );
+    return Number(result.rows[0]?.head ?? 0);
+  }
+
+  async countPending(
+    db: Queryable,
+    afterGlobalPosition: number,
+    streamTypes: string[] | null = null,
+  ): Promise<number> {
+    const result = await db.query<{ pending: string }>(
+      `SELECT count(*)::text AS pending
+         FROM ledger_events
+        WHERE global_position > $1
+          AND ($2::text[] IS NULL OR stream_type = ANY($2::text[]))`,
+      [afterGlobalPosition, streamTypes],
+    );
+    return Number(result.rows[0]?.pending ?? 0);
+  }
+
+  async findStreamIds(db: Queryable, afterStreamId: string | null, limit: number): Promise<string[]> {
+    const result = await db.query<{ stream_id: string }>(
+      `SELECT DISTINCT stream_id
+         FROM ledger_events
+        WHERE ($1::text IS NULL OR stream_id > $1::text)
+        ORDER BY stream_id ASC
+        LIMIT $2`,
+      [afterStreamId, limit],
+    );
+    return result.rows.map((row) => row.stream_id);
   }
 
   async findAll(db: Queryable, query: ReadAllQuery): Promise<StoredEvent[]> {

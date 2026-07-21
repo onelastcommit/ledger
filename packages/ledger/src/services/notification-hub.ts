@@ -75,7 +75,6 @@ export class NotificationHub {
     }
     if (this.closed || this.listeners.size === 0) return;
 
-    // Wake every listener so they fall back to polling while we reconnect.
     for (const listener of this.listeners) listener();
 
     const delay = Math.min(RECONNECT_BASE_MS * 2 ** this.reconnectAttempts, RECONNECT_MAX_MS);
@@ -86,7 +85,6 @@ export class NotificationHub {
     this.reconnectTimer.unref();
   }
 
-  /** The pooled client held for LISTEN, so callers can pin session state to it. */
   session(): PoolClient | undefined {
     return this.client;
   }

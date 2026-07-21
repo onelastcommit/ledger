@@ -7,13 +7,14 @@ import { MigrationRepository } from './repositories/migration.repository';
 import { StreamRepository } from './repositories/stream.repository';
 import { SubscriptionRepository } from './repositories/subscription.repository';
 import { AppendService } from './services/append.service';
+import { MaintenanceService } from './services/maintenance.service';
 import { MigrationService } from './services/migration.service';
 import { NotificationHub } from './services/notification-hub';
 import { ProjectionService } from './services/projection.service';
 import { StreamReaderService } from './services/stream-reader.service';
 import { SubscriptionService } from './services/subscription.service';
 import { VerificationService } from './services/verification.service';
-import type { AppendParams, ReadAllOptions, StoredEvent } from './types';
+import type { AppendParams, ReadAllOptions, ReadStreamOptions, StoredEvent } from './types';
 
 export const DEFAULT_NOTIFY_CHANNEL = 'ledger_events';
 
@@ -39,7 +40,14 @@ export const createLedger = (config: LedgerConfig): Ledger => {
     entities,
     notifyChannel,
   });
-  const verifier = new VerificationService(eventRepository);
+  const verifier = new VerificationService(reader);
+  const maintenance = new MaintenanceService({
+    pool,
+    events: eventRepository,
+    streams: streamRepository,
+    reader,
+    entities,
+  });
   const migrator = new MigrationService({
     pool,
     migrations: migrationRepository,
@@ -56,6 +64,7 @@ export const createLedger = (config: LedgerConfig): Ledger => {
   const subscriber = new SubscriptionService({
     pool,
     reader,
+    events: eventRepository,
     subscriptions: subscriptionRepository,
     hub,
   });
@@ -88,13 +97,15 @@ export const createLedger = (config: LedgerConfig): Ledger => {
     append,
     withTransaction,
     migrate: () => migrator.migrate(),
-    readStream: (streamId: string, options?: ReadOptions) =>
-      reader.readStream(options?.client ?? pool, streamId),
+    readStream: (streamId: string, options?: ReadStreamOptions & ReadOptions) =>
+      reader.readStream(options?.client ?? pool, streamId, options ?? {}),
     readAll: (options?: ReadAllOptions) => reader.readAll(pool, options),
     getState: (streamId: string, options?: ReadOptions) =>
       reader.getState(options?.client ?? pool, streamId),
     verifyStream: (streamId: string) => verifier.verifyStream(pool, streamId),
     subscribe: (options) => subscriber.subscribe(options),
+    rebuildStream: (streamId: string) => maintenance.rebuildStream(streamId),
+    rebuildAllStreams: () => maintenance.rebuildAllStreams(),
     close: () => hub.close(),
   };
 };

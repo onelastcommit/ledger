@@ -55,4 +55,27 @@ export class StreamRepository {
     );
     return result.rowCount !== 0;
   }
+
+  async replaceHead(
+    db: Queryable,
+    head: {
+      streamId: string;
+      streamType: string;
+      lastSeq: number;
+      state: string | null;
+      lastHash: string;
+    },
+  ): Promise<void> {
+    await db.query(
+      `INSERT INTO ledger_streams (stream_id, stream_type, last_seq, state, last_hash)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (stream_id) DO UPDATE
+         SET stream_type = EXCLUDED.stream_type,
+             last_seq    = EXCLUDED.last_seq,
+             state       = EXCLUDED.state,
+             last_hash   = EXCLUDED.last_hash,
+             updated_at  = now()`,
+      [head.streamId, head.streamType, head.lastSeq, head.state, head.lastHash],
+    );
+  }
 }

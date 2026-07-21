@@ -20,7 +20,9 @@ export type {
   DeadLetterPolicy,
   Subscription,
   SubscriptionOptions,
+  SubscriptionStatus,
 } from './services/subscription.types';
+export type { RebuildReport, RebuiltStream } from './services/maintenance.types';
 
 export {
   HashChainBrokenError,
@@ -39,6 +41,7 @@ export type {
   EventInput,
   JsonValue,
   ReadAllOptions,
+  ReadStreamOptions,
   SourceRef,
   StoredEvent,
   StreamState,

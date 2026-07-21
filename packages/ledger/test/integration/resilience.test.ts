@@ -170,7 +170,6 @@ describe.skipIf(!hasDatabase)('resilience', () => {
           return row.rows[0]?.position === '1';
         });
 
-        // Event 3 must not be consumed past the poison event.
         await new Promise((resolve) => setTimeout(resolve, 200));
         expect(handled).toEqual([1]);
       } finally {
@@ -206,7 +205,6 @@ describe.skipIf(!hasDatabase)('resilience', () => {
         });
         await watcher.caughtUp();
 
-        // Five subscriptions must not mean five dedicated LISTEN connections.
         expect(h.pool.totalCount).toBeLessThan(before + 5);
 
         await h.ledger.withTransaction((tx) =>
@@ -218,7 +216,6 @@ describe.skipIf(!hasDatabase)('resilience', () => {
           }),
         );
 
-        // NOTIFY still reaches subscribers through the shared connection.
         await waitFor(() => seen.length === 1, { timeoutMs: 10_000 });
         await watcher.stop();
       } finally {
