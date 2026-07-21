@@ -5,9 +5,9 @@ import {
   StreamNotFoundError,
   UnknownEventTypeError,
   VersionConflictError,
-} from '../../src/errors.js';
-import { foldState } from '../../src/fsm.js';
-import { createHarness, customer, hasDatabase, order, uniqueStreamId, type Harness } from './harness.js';
+} from '../../src/errors';
+import { foldState } from '../../src/domain/fsm';
+import { createHarness, customer, hasDatabase, order, uniqueStreamId, type Harness } from './harness';
 
 describe.skipIf(!hasDatabase)('PostgresEventStore', () => {
   let h: Harness;

@@ -1,22 +1,8 @@
 import { createHash } from 'node:crypto';
-import type { StoredEvent, VerificationResult } from './types.js';
+import type { StoredEvent, VerificationResult } from '../types';
+import type { CanonicalisableEvent } from './hash.types';
 
-export interface CanonicalisableEvent {
-  id: string;
-  streamId: string;
-  seq: number;
-  type: string;
-  payload: unknown;
-  actor: unknown;
-  source?: unknown;
-  occurredAt: string;
-}
-
-export function canonicalise(value: unknown): string {
-  return canonicaliseValue(value) ?? 'null';
-}
-
-function canonicaliseValue(value: unknown): string | undefined {
+const canonicaliseValue = (value: unknown): string | undefined => {
   if (value === null) return 'null';
 
   switch (typeof value) {
@@ -36,6 +22,8 @@ function canonicaliseValue(value: unknown): string | undefined {
     case 'function':
     case 'symbol':
       throw new TypeError(`Cannot canonicalise a ${typeof value}.`);
+    case 'object':
+      break;
   }
 
   const object = value as { toJSON?: (key?: string) => unknown };
@@ -53,9 +41,11 @@ function canonicaliseValue(value: unknown): string | undefined {
     parts.push(`${JSON.stringify(key)}:${encoded}`);
   }
   return `{${parts.join(',')}}`;
-}
+};
 
-export function canonicaliseEvent(event: CanonicalisableEvent): string {
+export const canonicalise = (value: unknown): string => canonicaliseValue(value) ?? 'null';
+
+export const canonicaliseEvent = (event: CanonicalisableEvent): string => {
   const fields: Record<string, unknown> = {
     id: event.id,
     streamId: event.streamId,
@@ -67,13 +57,12 @@ export function canonicaliseEvent(event: CanonicalisableEvent): string {
   };
   if (event.source !== undefined && event.source !== null) fields['source'] = event.source;
   return canonicalise(fields);
-}
+};
 
-export function hashEvent(prevHash: string, event: CanonicalisableEvent): string {
-  return createHash('sha256').update(prevHash).update(canonicaliseEvent(event)).digest('hex');
-}
+export const hashEvent = (prevHash: string, event: CanonicalisableEvent): string =>
+  createHash('sha256').update(prevHash).update(canonicaliseEvent(event)).digest('hex');
 
-export function chainHashes(prevHash: string, events: CanonicalisableEvent[]): string[] {
+export const chainHashes = (prevHash: string, events: CanonicalisableEvent[]): string[] => {
   const hashes: string[] = [];
   let previous = prevHash;
   for (const event of events) {
@@ -81,9 +70,9 @@ export function chainHashes(prevHash: string, events: CanonicalisableEvent[]): s
     hashes.push(previous);
   }
   return hashes;
-}
+};
 
-export function verifyChain(events: StoredEvent[]): VerificationResult {
+export const verifyChain = (events: StoredEvent[]): VerificationResult => {
   let previous = '';
   for (const event of events) {
     const expected = hashEvent(previous, event);
@@ -91,4 +80,4 @@ export function verifyChain(events: StoredEvent[]): VerificationResult {
     previous = expected;
   }
   return { valid: true };
-}
+};

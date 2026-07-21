@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import type { StoredEvent } from '../../src/types.js';
+import type { StoredEvent } from '../../src/types';
 import {
   createHarness,
   customer,
@@ -8,7 +8,7 @@ import {
   uniqueStreamId,
   waitFor,
   type Harness,
-} from './harness.js';
+} from './harness';
 
 describe.skipIf(!hasDatabase)('catch-up subscriptions', () => {
   let h: Harness;
@@ -26,7 +26,7 @@ describe.skipIf(!hasDatabase)('catch-up subscriptions', () => {
   const placed = { type: 'OrderPlaced', payload: { total: 10 }, actor: customer };
   const paid = { type: 'OrderPaid', payload: {}, actor: customer };
 
-  async function seed(count: number): Promise<string[]> {
+  const seed = async (count: number): Promise<string[]> => {
     const ids: string[] = [];
     for (let i = 0; i < count; i += 1) {
       const streamId = uniqueStreamId();
@@ -36,7 +36,7 @@ describe.skipIf(!hasDatabase)('catch-up subscriptions', () => {
       );
     }
     return ids;
-  }
+  };
 
   it('consumes a backlog and persists its cursor', async () => {
     await seed(5);

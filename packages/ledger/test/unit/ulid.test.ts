@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decodeUlidTime, isUlid, monotonicUlidFactory, ulid } from '../../src/ulid.js';
+import { decodeUlidTime, isUlid, monotonicUlidFactory, ulid } from '../../src/domain/ulid';
 
 describe('ulid', () => {
   it('is 26 Crockford base32 characters', () => {

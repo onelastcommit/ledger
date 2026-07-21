@@ -1,18 +1,21 @@
-export { createLedger, DEFAULT_NOTIFY_CHANNEL } from './store.js';
-export type { Ledger, LedgerConfig, LedgerTransaction } from './store.js';
+export { createLedger, DEFAULT_NOTIFY_CHANNEL } from './ledger';
+export type { Ledger, LedgerConfig, LedgerTransaction, ReadOptions } from './ledger.types';
 
-export { defineEntity, applyEvent, foldState, isTerminalState } from './fsm.js';
-export type { EntityDefinition, EntityDefinitionInput, TransitionDefinition } from './fsm.js';
+export { applyEvent, defineEntity, foldState, isTerminalState } from './domain/fsm';
+export type {
+  EntityDefinition,
+  EntityDefinitionInput,
+  TransitionDefinition,
+} from './domain/fsm.types';
 
-export { canonicalise, canonicaliseEvent, chainHashes, hashEvent, verifyChain } from './hash.js';
-export type { CanonicalisableEvent } from './hash.js';
+export { canonicalise, canonicaliseEvent, chainHashes, hashEvent, verifyChain } from './domain/hash';
+export type { CanonicalisableEvent } from './domain/hash.types';
 
-export { ALL_EVENTS } from './projections.js';
-export type { Projection, ProjectionContext } from './projections.js';
+export { decodeUlidTime, isUlid, monotonicUlidFactory, ulid } from './domain/ulid';
 
-export type { Subscription, SubscriptionOptions } from './subscriptions.js';
-
-export { decodeUlidTime, isUlid, monotonicUlidFactory, ulid } from './ulid.js';
+export { ALL_EVENTS } from './services/projection.service';
+export type { Projection, ProjectionContext } from './services/projection.types';
+export type { Subscription, SubscriptionOptions } from './services/subscription.types';
 
 export {
   HashChainBrokenError,
@@ -23,7 +26,7 @@ export {
   StreamNotFoundError,
   UnknownEventTypeError,
   VersionConflictError,
-} from './errors.js';
+} from './errors';
 
 export type {
   Actor,
@@ -35,4 +38,4 @@ export type {
   StoredEvent,
   StreamState,
   VerificationResult,
-} from './types.js';
+} from './types';

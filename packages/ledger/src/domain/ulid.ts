@@ -7,7 +7,7 @@ const RANDOM_LEN = 16;
 
 export const ULID_MAX_TIME = 281_474_976_710_655;
 
-function encodeTime(time: number): string {
+const encodeTime = (time: number): string => {
   if (!Number.isInteger(time) || time < 0 || time > ULID_MAX_TIME) {
     throw new RangeError(`ULID timestamp out of range: ${time}`);
   }
@@ -19,18 +19,18 @@ function encodeTime(time: number): string {
     remaining = (remaining - mod) / ENCODING_LEN;
   }
   return out;
-}
+};
 
-function randomDigits(): number[] {
+const randomDigits = (): number[] => {
   const bytes = randomBytes(RANDOM_LEN);
   const digits: number[] = new Array<number>(RANDOM_LEN);
   for (let i = 0; i < RANDOM_LEN; i += 1) {
     digits[i] = (bytes.at(i) ?? 0) % ENCODING_LEN;
   }
   return digits;
-}
+};
 
-function incrementDigits(digits: number[]): boolean {
+const incrementDigits = (digits: number[]): boolean => {
   for (let i = digits.length - 1; i >= 0; i -= 1) {
     const digit = digits[i] ?? 0;
     if (digit < ENCODING_LEN - 1) {
@@ -40,19 +40,19 @@ function incrementDigits(digits: number[]): boolean {
     digits[i] = 0;
   }
   return false;
-}
+};
 
-function encodeDigits(digits: number[]): string {
+const encodeDigits = (digits: number[]): string => {
   let out = '';
   for (const digit of digits) out += ENCODING.charAt(digit);
   return out;
-}
+};
 
-export function monotonicUlidFactory(now: () => number = Date.now): () => string {
+export const monotonicUlidFactory = (now: () => number = Date.now): (() => string) => {
   let lastTime = -1;
   let lastDigits: number[] = [];
 
-  return function ulid(): string {
+  return (): string => {
     const time = now();
     if (time > lastTime) {
       lastTime = time;
@@ -63,11 +63,11 @@ export function monotonicUlidFactory(now: () => number = Date.now): () => string
     }
     return encodeTime(lastTime) + encodeDigits(lastDigits);
   };
-}
+};
 
 export const ulid = monotonicUlidFactory();
 
-export function decodeUlidTime(id: string): number {
+export const decodeUlidTime = (id: string): number => {
   if (id.length !== TIME_LEN + RANDOM_LEN) {
     throw new TypeError(`Not a ULID: expected 26 characters, got ${id.length}`);
   }
@@ -78,12 +78,12 @@ export function decodeUlidTime(id: string): number {
     time = time * ENCODING_LEN + value;
   }
   return time;
-}
+};
 
-export function isUlid(value: string): boolean {
+export const isUlid = (value: string): boolean => {
   if (value.length !== TIME_LEN + RANDOM_LEN) return false;
   for (const char of value) {
     if (!ENCODING.includes(char)) return false;
   }
   return decodeUlidTime(value) <= ULID_MAX_TIME;
-}
+};

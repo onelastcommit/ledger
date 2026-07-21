@@ -2,26 +2,10 @@ import {
   InvalidEntityDefinitionError,
   InvalidTransitionError,
   UnknownEventTypeError,
-} from './errors.js';
+} from '../errors';
+import type { EntityDefinition, EntityDefinitionInput } from './fsm.types';
 
-export interface TransitionDefinition {
-  from: readonly (string | null)[];
-  to: string;
-  terminal?: boolean;
-}
-
-export interface EntityDefinitionInput {
-  streamType: string;
-  initial: string;
-  states: readonly string[];
-  events: Readonly<Record<string, TransitionDefinition>>;
-}
-
-export interface EntityDefinition extends EntityDefinitionInput {
-  readonly terminalStates: ReadonlySet<string>;
-}
-
-export function defineEntity(input: EntityDefinitionInput): EntityDefinition {
+export const defineEntity = (input: EntityDefinitionInput): EntityDefinition => {
   const { streamType, initial, states, events } = input;
   const fail = (message: string): never => {
     throw new InvalidEntityDefinitionError(`Entity "${streamType}": ${message}`);
@@ -75,18 +59,19 @@ export function defineEntity(input: EntityDefinitionInput): EntityDefinition {
   }
 
   return { ...input, terminalStates };
-}
+};
 
-export function isTerminalState(definition: EntityDefinition, state: string | null): boolean {
-  return state !== null && definition.terminalStates.has(state);
-}
+export const isTerminalState = (
+  definition: EntityDefinition,
+  state: string | null,
+): boolean => state !== null && definition.terminalStates.has(state);
 
-export function applyEvent(
+export const applyEvent = (
   definition: EntityDefinition,
   currentState: string | null,
   eventType: string,
   streamId: string,
-): string {
+): string => {
   const transition = definition.events[eventType];
   if (transition === undefined) {
     throw new UnknownEventTypeError(definition.streamType, eventType);
@@ -95,23 +80,23 @@ export function applyEvent(
     throw new InvalidTransitionError(streamId, definition.streamType, currentState, eventType);
   }
   return transition.to;
-}
+};
 
-export function foldState(
+export const foldState = (
   definition: EntityDefinition,
   eventTypes: readonly string[],
   streamId = '<unknown>',
-): string | null {
+): string | null => {
   let state: string | null = null;
   for (const eventType of eventTypes) {
     state = applyEvent(definition, state, eventType, streamId);
   }
   return state;
-}
+};
 
-export function buildEntityRegistry(
+export const buildEntityRegistry = (
   entities: readonly EntityDefinition[],
-): ReadonlyMap<string, EntityDefinition> {
+): ReadonlyMap<string, EntityDefinition> => {
   const registry = new Map<string, EntityDefinition>();
   for (const entity of entities) {
     if (registry.has(entity.streamType)) {
@@ -122,4 +107,4 @@ export function buildEntityRegistry(
     registry.set(entity.streamType, entity);
   }
   return registry;
-}
+};

@@ -1,8 +1,9 @@
 import pg from 'pg';
 import { inject } from 'vitest';
-import { defineEntity } from '../../src/fsm.js';
-import { createLedger, type Ledger, type LedgerConfig } from '../../src/store.js';
-import type { Actor } from '../../src/types.js';
+import { defineEntity } from '../../src/domain/fsm';
+import { createLedger } from '../../src/ledger';
+import type { Ledger, LedgerConfig } from '../../src/ledger.types';
+import type { Actor } from '../../src/types';
 
 export const databaseUrl = inject('databaseUrl');
 export const hasDatabase = databaseUrl !== null;
@@ -28,9 +29,9 @@ export interface Harness {
   close(): Promise<void>;
 }
 
-export async function createHarness(
+export const createHarness = async (
   config: Omit<LedgerConfig, 'pool'> = { entities: [order] },
-): Promise<Harness> {
+): Promise<Harness> => {
   if (databaseUrl === null) throw new Error('No database available.');
   const pool = new pg.Pool({ connectionString: databaseUrl, max: 8 });
   const ledger = createLedger({ pool, ...config });
@@ -48,20 +49,19 @@ export async function createHarness(
       await pool.end();
     },
   };
-}
+};
 
-export function uniqueStreamId(prefix = 'order'): string {
-  return `${prefix}:${Math.random().toString(36).slice(2, 10)}`;
-}
+export const uniqueStreamId = (prefix = 'order'): string =>
+  `${prefix}:${Math.random().toString(36).slice(2, 10)}`;
 
-export async function waitFor(
+export const waitFor = async (
   predicate: () => boolean | Promise<boolean>,
   { timeoutMs = 10_000, intervalMs = 25 } = {},
-): Promise<void> {
+): Promise<void> => {
   const deadline = Date.now() + timeoutMs;
   for (;;) {
     if (await predicate()) return;
     if (Date.now() > deadline) throw new Error('Timed out waiting for condition.');
     await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
-}
+};

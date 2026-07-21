@@ -5,12 +5,12 @@ import {
   defineEntity,
   foldState,
   isTerminalState,
-} from '../../src/fsm.js';
+} from '../../src/domain/fsm';
 import {
   InvalidEntityDefinitionError,
   InvalidTransitionError,
   UnknownEventTypeError,
-} from '../../src/errors.js';
+} from '../../src/errors';
 
 const entry = defineEntity({
   streamType: 'entry',

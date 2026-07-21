@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { ProjectionFailedError } from '../../src/errors.js';
-import type { Projection } from '../../src/projections.js';
-import { createHarness, customer, hasDatabase, order, uniqueStreamId, type Harness } from './harness.js';
+import { ProjectionFailedError } from '../../src/errors';
+import type { Projection } from '../../src/services/projection.types';
+import { createHarness, customer, hasDatabase, order, uniqueStreamId, type Harness } from './harness';
 
 const ordersProjection: Projection = {
   name: 'orders',

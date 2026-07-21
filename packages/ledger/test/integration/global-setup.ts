@@ -20,11 +20,13 @@ const SKIP_NOTICE = `
   ────────────────────────────────────────────────────────────────────────────
 `;
 
-export default async function setup({ provide }: GlobalSetupContext): Promise<() => Promise<void>> {
+type Teardown = () => void | Promise<void>;
+
+export default async function setup({ provide }: GlobalSetupContext): Promise<Teardown> {
   const fromEnv = process.env['DATABASE_URL'];
   if (fromEnv !== undefined && fromEnv !== '') {
     provide('databaseUrl', fromEnv);
-    return async () => undefined;
+    return () => undefined;
   }
 
   try {
@@ -38,6 +40,6 @@ export default async function setup({ provide }: GlobalSetupContext): Promise<()
     console.warn(SKIP_NOTICE);
     console.warn(`  Reason: ${error instanceof Error ? error.message : String(error)}\n`);
     provide('databaseUrl', null);
-    return async () => undefined;
+    return () => undefined;
   }
 }

@@ -2,7 +2,7 @@ export class LedgerError extends Error {
   constructor(message: string, options?: { cause?: unknown }) {
     super(message, options);
     this.name = new.target.name;
-    Error.captureStackTrace?.(this, new.target);
+    Error.captureStackTrace(this, new.target);
   }
 }
 

@@ -6,9 +6,9 @@ import {
   chainHashes,
   hashEvent,
   verifyChain,
-  type CanonicalisableEvent,
-} from '../../src/hash.js';
-import type { StoredEvent } from '../../src/types.js';
+} from '../../src/domain/hash';
+import type { CanonicalisableEvent } from '../../src/domain/hash.types';
+import type { StoredEvent } from '../../src/types';
 
 const baseEvent: CanonicalisableEvent = {
   id: '01HZY000000000000000000000',
@@ -162,16 +162,14 @@ describe('chainHashes', () => {
   });
 });
 
-function stored(event: Omit<CanonicalisableEvent, 'source'>, hash: string): StoredEvent {
-  return {
-    ...event,
-    streamType: 'order',
-    globalPosition: event.seq,
-    recordedAt: '2026-01-01T00:00:00.000Z',
-    actor: { kind: 'system' },
-    hash,
-  };
-}
+const stored = (event: Omit<CanonicalisableEvent, 'source'>, hash: string): StoredEvent => ({
+  ...event,
+  streamType: 'order',
+  globalPosition: event.seq,
+  recordedAt: '2026-01-01T00:00:00.000Z',
+  actor: { kind: 'system' },
+  hash,
+});
 
 describe('verifyChain', () => {
   const one = { ...baseEvent, actor: { kind: 'system' as const } };
