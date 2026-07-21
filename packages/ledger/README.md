@@ -1,4 +1,4 @@
-# @ahmadalmezaal/ledger
+# @1percentlabs/ledger
 
 > **0.x — the API is not yet stable.** Minor versions may break things until 1.0.
 
@@ -12,7 +12,7 @@ It is a library, not a server: no broker, no daemon, no domain opinions. The eve
 ## Install
 
 ```bash
-pnpm add @ahmadalmezaal/ledger pg
+pnpm add @1percentlabs/ledger pg
 ```
 
 ## Quick start
@@ -21,7 +21,7 @@ An order lifecycle: `placed → paid → shipped`, with cancellation allowed unt
 
 ```ts
 import pg from 'pg';
-import { createLedger, defineEntity, type Projection } from '@ahmadalmezaal/ledger';
+import { createLedger, defineEntity, type Projection } from '@1percentlabs/ledger';
 
 const order = defineEntity({
   streamType: 'order',

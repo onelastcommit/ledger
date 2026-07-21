@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this is
 
-`@ahmadalmezaal/ledger` — a domain-agnostic, append-only event store on plain
+`@1percentlabs/ledger` — a domain-agnostic, append-only event store on plain
 PostgreSQL, with first-class provenance and per-entity state machines. It runs
 in-process on the caller's `pg.Pool`, and the append joins the **caller's**
 transaction so their read models commit atomically with the events.

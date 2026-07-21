@@ -1,5 +1,5 @@
 import pg from 'pg';
-import { createLedger, defineEntity, type Projection } from '@ahmadalmezaal/ledger';
+import { createLedger, defineEntity, type Projection } from '@1percentlabs/ledger';
 
 export const order = defineEntity({
   streamType: 'order',

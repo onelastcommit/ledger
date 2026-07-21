@@ -1,10 +1,23 @@
 {
-  "name": "@ahmadalmezaal/ledger",
+  "name": "@1percentlabs/ledger",
   "version": "0.1.0",
   "description": "Domain-agnostic, append-only event store with first-class provenance and per-entity state machines, on plain PostgreSQL.",
   "license": "MIT",
   "author": "Ahmad Al Mezaal",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ahmadAlMezaal/ledger.git",
+    "directory": "packages/ledger"
+  },
+  "homepage": "https://github.com/ahmadAlMezaal/ledger/tree/main/packages/ledger#readme",
+  "bugs": {
+    "url": "https://github.com/ahmadAlMezaal/ledger/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "engines": {
     "node": ">=24"
   },

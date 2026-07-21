@@ -23,7 +23,7 @@ importers:
 
   apps/orders-example:
     dependencies:
-      '@ahmadalmezaal/ledger':
+      '@1percentlabs/ledger':
         specifier: workspace:*
         version: link:../../packages/ledger
       pg:

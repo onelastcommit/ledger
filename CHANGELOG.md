@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `@ahmadalmezaal/ledger` are recorded here. The format
+All notable changes to `@1percentlabs/ledger` are recorded here. The format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html) — with
 the caveat that while on 0.x, minor versions may contain breaking changes.

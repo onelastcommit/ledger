@@ -1,4 +1,4 @@
-import { InvalidTransitionError } from '@ahmadalmezaal/ledger';
+import { InvalidTransitionError } from '@1percentlabs/ledger';
 import { ledger, pool, setupReadModel } from './ledger.ts';
 import { payOrder, placeOrder, shipOrder } from './orders.service.ts';
 

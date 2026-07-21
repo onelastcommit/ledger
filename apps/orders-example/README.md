@@ -1,6 +1,6 @@
 # orders-example
 
-A worked example of consuming `@ahmadalmezaal/ledger` from an application: an
+A worked example of consuming `@1percentlabs/ledger` from an application: an
 order lifecycle of `placed → paid → shipped`, with cancellation allowed until it
 ships.
 

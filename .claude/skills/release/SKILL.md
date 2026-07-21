@@ -1,6 +1,6 @@
 ---
 name: release
-description: Cut a release of @ahmadalmezaal/ledger to npm. Use when publishing a new version, bumping the version number, or preparing release notes. Covers the tag-and-version contract the CI workflow enforces.
+description: Cut a release of @1percentlabs/ledger to npm. Use when publishing a new version, bumping the version number, or preparing release notes. Covers the tag-and-version contract the CI workflow enforces.
 ---
 
 # Releasing
@@ -42,7 +42,7 @@ rather than working around it.
 
    ```bash
    cd packages/ledger && pnpm pack --pack-destination /tmp
-   tar -tzf /tmp/ahmadalmezaal-ledger-<version>.tgz
+   tar -tzf /tmp/1percentlabs-ledger-<version>.tgz
    ```
 
    `dist/migrations/*.sql` **must** be present. Without it `migrate()` fails for

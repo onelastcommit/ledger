@@ -3,7 +3,7 @@ import {
   type Actor,
   type EventInput,
   type StoredEvent,
-} from '@ahmadalmezaal/ledger';
+} from '@1percentlabs/ledger';
 import { ledger } from './ledger.ts';
 
 const MAX_ATTEMPTS = 3;
