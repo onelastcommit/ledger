@@ -16,6 +16,7 @@ apps/              reserved for a docs site
 ## Development
 
 ```bash
+nvm use
 corepack enable
 pnpm install
 pnpm build

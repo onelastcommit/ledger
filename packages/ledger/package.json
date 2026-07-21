@@ -6,7 +6,7 @@
   "author": "Ahmad Al Mezaal",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.js",

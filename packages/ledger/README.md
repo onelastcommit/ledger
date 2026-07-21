@@ -7,7 +7,7 @@ An append-only event store for PostgreSQL with first-class **provenance** — ev
 It is a library, not a server: no broker, no daemon, no domain opinions. The event log itself is the durable queue.
 
 - **Runtime dependencies:** `pg`, and nothing else.
-- **Requires:** Node >= 20, PostgreSQL >= 14. ESM only.
+- **Requires:** Node >= 22, PostgreSQL >= 14. ESM only.
 
 ## Install
 
@@ -249,6 +249,22 @@ Three tables. `ledger_events` is the log; the other two are derivable from it.
 - **`globalPosition` is a `BIGSERIAL` read into a JavaScript number.** Exact below 2^53; beyond roughly nine quadrillion events you would need a `bigint`.
 - **The events table is append-only.** Nothing in this library issues `UPDATE` or `DELETE` against it. To have the database enforce that, `REVOKE UPDATE, DELETE, TRUNCATE ON ledger_events` from your application role — see the comment at the top of `001_init.sql`.
 
+## Internal structure
+
+Layered, with all SQL confined to the repository tier.
+
+```
+src/
+  ledger.ts            composition root — wires repositories into services
+  domain/              pure logic: fsm, hash chaining, ulid (no database, no clock)
+  repositories/        every SQL statement in the library lives here
+  services/            append, stream reading, verification, projections, subscriptions, migrations
+  *.types.ts           type declarations, co-located with what they describe
+```
+
+Services take their collaborators through the constructor, so each is testable
+against a fake repository. Wiring happens once, in `createLedger`.
+
 ## Development
 
 ```bash
@@ -263,7 +279,7 @@ pnpm test:integration  # Docker (testcontainers), or DATABASE_URL
 
 Integration tests provision `postgres:16-alpine` via testcontainers. Without Docker, set `DATABASE_URL` to point at a scratch database — it is `TRUNCATE`d between tests. With neither, they skip with an explanatory message rather than failing.
 
-The published package targets Node 20, but the toolchain needs Node 22 or newer, because pnpm 11 depends on `node:sqlite`.
+Use the Node version in `.nvmrc` (24 LTS) — `nvm use`. The package itself supports Node 22 and above.
 
 ## Licence
 
