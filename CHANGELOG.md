@@ -7,6 +7,10 @@ the caveat that while on 0.x, minor versions may contain breaking changes.
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.1.3] — 2026-07-21
+
 ### Added
 
 - `ledger.entity(...).readStream()` returns a discriminated union, so switching

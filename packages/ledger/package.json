@@ -1,6 +1,6 @@
 {
   "name": "@1percentlabs/ledger",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Domain-agnostic, append-only event store with first-class provenance and per-entity state machines, on plain PostgreSQL.",
   "license": "MIT",
   "author": "1 Percent Labs",
