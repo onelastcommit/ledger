@@ -10,7 +10,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ci:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: pnpm run build
+      - run: pnpm run lint
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: pnpm run build
+      - run: pnpm run typecheck
+
+  test-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+      - run: pnpm run test:unit
+
+  test-integration:
     runs-on: ubuntu-latest
 
     services:
@@ -30,24 +53,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
-
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - run: pnpm run build
-
-      - run: pnpm run lint
-
-      - run: pnpm run typecheck
-
-      - run: pnpm run test:unit
-
+      - uses: ./.github/actions/setup
       - run: pnpm run test:integration
         env:
           DATABASE_URL: postgres://ledger:ledger@localhost:5432/ledger_test
+
+  ci:
+    if: always()
+    needs: [lint, typecheck, test-unit, test-integration]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any job did not succeed
+        run: |
+          RESULTS="${{ join(needs.*.result, ' ') }}"
+          echo "Results: $RESULTS"
+          for RESULT in $RESULTS; do
+            if [ "$RESULT" != "success" ]; then
+              exit 1
+            fi
+          done
