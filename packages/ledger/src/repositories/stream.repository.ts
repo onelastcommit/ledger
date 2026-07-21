@@ -1,16 +1,15 @@
 import type { StreamState } from '../types';
-import type { Queryable, StreamHead } from './repository.types';
+import { selectList, STREAM_COLUMN_MAP } from './columns';
+import type { Queryable, StreamHead, StreamRow } from './repository.types';
+
+const SELECT_COLUMNS = selectList(STREAM_COLUMN_MAP);
 
 export class StreamRepository {
   async findHead(db: Queryable, streamId: string): Promise<StreamHead | undefined> {
-    const result = await db.query<{
-      stream_type: string;
-      last_seq: number;
-      state: string | null;
-      last_hash: string;
-    }>('SELECT stream_type, last_seq, state, last_hash FROM ledger_streams WHERE stream_id = $1', [
-      streamId,
-    ]);
+    const result = await db.query<StreamRow>(
+      `SELECT ${SELECT_COLUMNS} FROM ledger_streams WHERE stream_id = $1`,
+      [streamId],
+    );
 
     const row = result.rows[0];
     if (row === undefined) return undefined;
@@ -23,7 +22,7 @@ export class StreamRepository {
   }
 
   async findState(db: Queryable, streamId: string): Promise<StreamState | undefined> {
-    const result = await db.query<{ state: string | null; last_seq: number }>(
+    const result = await db.query<Pick<StreamRow, 'state' | 'last_seq'>>(
       'SELECT state, last_seq FROM ledger_streams WHERE stream_id = $1',
       [streamId],
     );

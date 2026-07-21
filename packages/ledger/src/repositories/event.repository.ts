@@ -1,4 +1,5 @@
 import type { StoredEvent } from '../types';
+import { EVENT_COLUMN_MAP, insertList, selectList } from './columns';
 import type {
   EventRow,
   InsertableEvent,
@@ -7,10 +8,13 @@ import type {
   ReadAllQuery,
 } from './repository.types';
 
-const COLUMNS = `global_position, id, stream_id, stream_type, seq, type, payload,
-       actor, source, payload_version, occurred_at, recorded_at, hash`;
+const SELECT_COLUMNS = selectList(EVENT_COLUMN_MAP);
 
-const COLUMNS_PER_ROW = 11;
+const INSERT_COLUMNS = insertList(EVENT_COLUMN_MAP, ['globalPosition', 'recordedAt']);
+const PARAMS_PER_ROW = INSERT_COLUMNS.length;
+
+const POSTGRES_MAX_BIND_PARAMS = 65_535;
+export const MAX_EVENTS_PER_STATEMENT = Math.floor(POSTGRES_MAX_BIND_PARAMS / PARAMS_PER_ROW);
 
 const toStoredEvent = (row: EventRow): StoredEvent => {
   const event: StoredEvent = {
@@ -31,26 +35,31 @@ const toStoredEvent = (row: EventRow): StoredEvent => {
   return event;
 };
 
+const bindValues = (event: InsertableEvent): unknown[] => [
+  event.id,
+  event.streamId,
+  event.streamType,
+  event.seq,
+  event.type,
+  JSON.stringify(event.payload),
+  JSON.stringify(event.actor),
+  event.source === undefined ? null : JSON.stringify(event.source),
+  event.payloadVersion ?? null,
+  event.occurredAt,
+  event.hash,
+];
+
 export class EventRepository {
-  async insert(db: Queryable, events: readonly InsertableEvent[]): Promise<InsertedEventRow[]> {
+  private async insertChunk(
+    db: Queryable,
+    events: readonly InsertableEvent[],
+  ): Promise<InsertedEventRow[]> {
     const values: unknown[] = [];
     const tuples = events.map((event, index) => {
-      const base = index * COLUMNS_PER_ROW;
-      values.push(
-        event.id,
-        event.streamId,
-        event.streamType,
-        event.seq,
-        event.type,
-        JSON.stringify(event.payload),
-        JSON.stringify(event.actor),
-        event.source === undefined ? null : JSON.stringify(event.source),
-        event.payloadVersion ?? null,
-        event.occurredAt,
-        event.hash,
-      );
+      const base = index * PARAMS_PER_ROW;
+      values.push(...bindValues(event));
       const placeholders = Array.from(
-        { length: COLUMNS_PER_ROW },
+        { length: PARAMS_PER_ROW },
         (_, offset) => `$${base + offset + 1}`,
       );
       return `(${placeholders.join(', ')})`;
@@ -61,8 +70,7 @@ export class EventRepository {
       seq: number;
       recorded_at: Date;
     }>(
-      `INSERT INTO ledger_events
-         (id, stream_id, stream_type, seq, type, payload, actor, source, payload_version, occurred_at, hash)
+      `INSERT INTO ledger_events (${INSERT_COLUMNS.join(', ')})
        VALUES ${tuples.join(', ')}
        RETURNING global_position, seq, recorded_at`,
       values,
@@ -75,9 +83,22 @@ export class EventRepository {
     }));
   }
 
+  async insert(db: Queryable, events: readonly InsertableEvent[]): Promise<InsertedEventRow[]> {
+    if (events.length <= MAX_EVENTS_PER_STATEMENT) {
+      return this.insertChunk(db, events);
+    }
+
+    const inserted: InsertedEventRow[] = [];
+    for (let offset = 0; offset < events.length; offset += MAX_EVENTS_PER_STATEMENT) {
+      const chunk = events.slice(offset, offset + MAX_EVENTS_PER_STATEMENT);
+      inserted.push(...(await this.insertChunk(db, chunk)));
+    }
+    return inserted;
+  }
+
   async findByStream(db: Queryable, streamId: string): Promise<StoredEvent[]> {
     const result = await db.query<EventRow>(
-      `SELECT ${COLUMNS} FROM ledger_events WHERE stream_id = $1 ORDER BY seq ASC`,
+      `SELECT ${SELECT_COLUMNS} FROM ledger_events WHERE stream_id = $1 ORDER BY seq ASC`,
       [streamId],
     );
     return result.rows.map(toStoredEvent);
@@ -85,7 +106,7 @@ export class EventRepository {
 
   async findAll(db: Queryable, query: ReadAllQuery): Promise<StoredEvent[]> {
     const result = await db.query<EventRow>(
-      `SELECT ${COLUMNS}
+      `SELECT ${SELECT_COLUMNS}
          FROM ledger_events
         WHERE global_position > $1
           AND ($2::text[] IS NULL OR stream_type = ANY($2::text[]))

@@ -1,25 +1,37 @@
 import type { QueryResult, QueryResultRow } from 'pg';
 import type { Actor, SourceRef } from '../types';
+import type { EVENT_COLUMN_MAP, SnakeRow, STREAM_COLUMN_MAP } from './columns';
 
 export interface Queryable {
   query<R extends QueryResultRow>(queryText: string, values?: unknown[]): Promise<QueryResult<R>>;
 }
 
-export interface EventRow {
-  global_position: string;
+interface EventFields {
+  globalPosition: string;
   id: string;
-  stream_id: string;
-  stream_type: string;
+  streamId: string;
+  streamType: string;
   seq: number;
   type: string;
   payload: unknown;
   actor: Actor;
   source: SourceRef | null;
-  payload_version: number | null;
-  occurred_at: Date;
-  recorded_at: Date;
+  payloadVersion: number | null;
+  occurredAt: Date;
+  recordedAt: Date;
   hash: string;
 }
+
+interface StreamFields {
+  streamId: string;
+  streamType: string;
+  lastSeq: number;
+  state: string | null;
+  lastHash: string;
+}
+
+export type EventRow = SnakeRow<typeof EVENT_COLUMN_MAP, EventFields>;
+export type StreamRow = SnakeRow<typeof STREAM_COLUMN_MAP, StreamFields>;
 
 export interface StreamHead {
   streamType: string;
@@ -52,4 +64,13 @@ export interface ReadAllQuery {
   afterGlobalPosition: number;
   streamTypes: string[] | null;
   limit: number;
+}
+
+export interface DeadLetterRecord {
+  subscriptionName: string;
+  globalPosition: number;
+  eventId: string;
+  eventType: string;
+  attempts: number;
+  error: string;
 }
