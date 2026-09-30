@@ -2,6 +2,8 @@
 
 > **0.x — the API is not yet stable.**
 
+Part of [One Last Commit](https://github.com/onelastcommit): small ideas, taken further than strictly necessary.
+
 A pnpm workspace containing **[`@onelastcommit/ledger`](packages/ledger)** — a domain-agnostic, append-only event store for PostgreSQL with first-class provenance and per-entity state machines.
 
 Start with **[the package README](packages/ledger/README.md)** for the quick start, API reference and design decisions.

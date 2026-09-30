@@ -2,6 +2,8 @@
 
 > **0.x — the API is not yet stable.** Minor versions may break things until 1.0.
 
+Part of [One Last Commit](https://github.com/onelastcommit): small ideas, taken further than strictly necessary.
+
 An append-only event store for PostgreSQL with first-class **provenance** — every event records who caused it, when it happened, and where it came from — and optional **per-entity state machines** validated at write time. It runs in your process, on your `pg.Pool`, inside your transaction, so your read models commit atomically with the events that produced them.
 
 It is a library, not a server: no broker, no daemon, no domain opinions. The event log itself is the durable queue.
