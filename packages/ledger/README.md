@@ -1,4 +1,4 @@
-# @1percentlabs/ledger
+# @onelastcommit/ledger
 
 > **0.x — the API is not yet stable.** Minor versions may break things until 1.0.
 
@@ -12,7 +12,7 @@ It is a library, not a server: no broker, no daemon, no domain opinions. The eve
 ## Install
 
 ```bash
-pnpm add @1percentlabs/ledger pg
+pnpm add @onelastcommit/ledger pg
 ```
 
 ## Quick start
@@ -21,7 +21,7 @@ An order lifecycle: `placed → paid → shipped`, with cancellation allowed unt
 
 ```ts
 import pg from 'pg';
-import { createLedger, defineEntity, type Projection } from '@1percentlabs/ledger';
+import { createLedger, defineEntity, type Projection } from '@onelastcommit/ledger';
 
 const order = defineEntity({
   streamType: 'order',
@@ -112,7 +112,7 @@ append against it. This is purely type-level — `payloadOf` erases at runtime a
 costs nothing.
 
 ```ts
-import { defineEntity, payloadOf } from '@1percentlabs/ledger';
+import { defineEntity, payloadOf } from '@onelastcommit/ledger';
 
 const order = defineEntity({
   streamType: 'order',
@@ -158,7 +158,7 @@ Four helpers read the types back out, so you never have to restate them. Each
 accepts either the definition or the `ledger.entity()` handle.
 
 ```ts
-import type { EventsOf, EventTypeOf, PayloadOf, PayloadsOf } from '@1percentlabs/ledger';
+import type { EventsOf, EventTypeOf, PayloadOf, PayloadsOf } from '@onelastcommit/ledger';
 
 type OrderEvent = EventsOf<typeof order>;
 // { type: 'OrderPlaced'; payload: { total: number; currency: string }; actor: Actor; ... }

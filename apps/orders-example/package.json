@@ -3,13 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "A worked example of consuming @1percentlabs/ledger from an application.",
+  "description": "A worked example of consuming @onelastcommit/ledger from an application.",
   "scripts": {
     "typecheck": "tsc --noEmit",
     "start": "node --experimental-strip-types src/main.ts"
   },
   "dependencies": {
-    "@1percentlabs/ledger": "workspace:*",
+    "@onelastcommit/ledger": "workspace:*",
     "pg": "^8.16.3"
   },
   "devDependencies": {
