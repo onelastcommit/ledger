@@ -1,6 +1,6 @@
 ---
 name: release
-description: Cut a release of @1percentlabs/ledger to npm. Use when publishing a new version, bumping the version number, or preparing release notes. Covers the tag-and-version contract the CI workflow enforces.
+description: Cut a release of @onelastcommit/ledger to npm. Use when publishing a new version, bumping the version number, or preparing release notes. Covers the tag-and-version contract the CI workflow enforces.
 ---
 
 # Releasing
@@ -17,7 +17,7 @@ tagging. Never publish unprompted.
 
 ## Authentication
 
-The package publishes under the `@1percentlabs` scope. Three routes, in order of
+The package publishes under the `@onelastcommit` scope. Three routes, in order of
 preference:
 
 1. **Trusted publishing (OIDC).** Authorise the repository and workflow on the
@@ -26,7 +26,7 @@ preference:
    after the first publish.
 2. **Granular access token** at
    `https://www.npmjs.com/settings/<user>/tokens/granular-access-tokens/new`,
-   scoped to `@1percentlabs` with read/write on both packages and the
+   scoped to `@onelastcommit` with read/write on both packages and the
    organisation. Store as the `NPM_TOKEN` repository secret. This is what
    satisfies npm's 2FA requirement for automated publishing; classic Automation
    tokens also work but are being phased out.
@@ -91,7 +91,7 @@ If the credential is missing, stop and say so rather than working around it.
 
    ```bash
    cd packages/ledger && pnpm pack --pack-destination /tmp
-   tar -tzf /tmp/1percentlabs-ledger-<version>.tgz
+   tar -tzf /tmp/onelastcommit-ledger-<version>.tgz
    ```
 
    `dist/migrations/*.sql` **must** be present. Without it `migrate()` fails for

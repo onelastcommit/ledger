@@ -4,14 +4,17 @@ Guidance for Claude Code when working in this repository.
 
 ## Current state
 
-`@1percentlabs/ledger@0.1.1` is **published and live** on npm. Publishing goes
-through **trusted publishing (OIDC)** — there is no `NPM_TOKEN` secret and there
-should never be one again. Tag `vX.Y.Z` and the Release workflow does the rest.
+The package is `@onelastcommit/ledger` from 0.1.4 onwards. Versions 0.1.0 to
+0.1.3 were published as `@1percentlabs/ledger`. Publishing goes through
+**trusted publishing (OIDC)**. There is no `NPM_TOKEN` secret and there should
+never be one again. Trusted publishing is configured per package, so the new
+name needs one manual first publish before the Release workflow can take over.
+After that, tag `vX.Y.Z` and the Release workflow does the rest.
 174 tests (107 unit, 67 integration), CI green.
 
 ## What this is
 
-`@1percentlabs/ledger` — a domain-agnostic, append-only event store on plain
+`@onelastcommit/ledger` — a domain-agnostic, append-only event store on plain
 PostgreSQL, with first-class provenance and per-entity state machines. It runs
 in-process on the caller's `pg.Pool`, and the append joins the **caller's**
 transaction so their read models commit atomically with the events.

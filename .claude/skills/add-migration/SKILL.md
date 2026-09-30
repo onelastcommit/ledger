@@ -1,6 +1,6 @@
 ---
 name: add-migration
-description: Add a database migration to the ledger package. Use when changing the Postgres schema — adding or altering a table, column, index or constraint used by @1percentlabs/ledger. Covers the registration step that is easy to miss and the append-only constraints on ledger_events.
+description: Add a database migration to the ledger package. Use when changing the Postgres schema — adding or altering a table, column, index or constraint used by @onelastcommit/ledger. Covers the registration step that is easy to miss and the append-only constraints on ledger_events.
 ---
 
 # Adding a migration

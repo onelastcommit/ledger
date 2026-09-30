@@ -5,7 +5,7 @@ import {
   payloadOf,
   type EventsOf,
   type Projection,
-} from '@1percentlabs/ledger';
+} from '@onelastcommit/ledger';
 
 export const order = defineEntity({
   streamType: 'order',

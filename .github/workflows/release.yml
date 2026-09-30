@@ -56,9 +56,9 @@ jobs:
 
       - name: Pack and verify the tarball
         run: |
-          pnpm --filter @1percentlabs/ledger pack --pack-destination /tmp
+          pnpm --filter @onelastcommit/ledger pack --pack-destination /tmp
           VERSION=$(node -p "require('./packages/ledger/package.json').version")
-          TARBALL="/tmp/1percentlabs-ledger-$VERSION.tgz"
+          TARBALL="/tmp/onelastcommit-ledger-$VERSION.tgz"
           tar -tzf "$TARBALL" | sort > /tmp/contents.txt
           echo "Contents of $TARBALL:"
           cat /tmp/contents.txt
@@ -76,6 +76,6 @@ jobs:
 
       - name: Publish
         if: startsWith(github.ref, 'refs/tags/v')
-        run: pnpm --filter @1percentlabs/ledger publish --access public --provenance --no-git-checks
+        run: pnpm --filter @onelastcommit/ledger publish --access public --provenance --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

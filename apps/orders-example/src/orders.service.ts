@@ -1,4 +1,4 @@
-import { VersionConflictError, type Actor, type StoredEvent } from '@1percentlabs/ledger';
+import { VersionConflictError, type Actor, type StoredEvent } from '@onelastcommit/ledger';
 import { ledger, orders, type OrderEvent } from './ledger.ts';
 
 const MAX_ATTEMPTS = 3;
