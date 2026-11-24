@@ -32,8 +32,10 @@ These are non-negotiable and have been reiterated by the user:
 - **British English** in all prose: comments, commit messages, PR descriptions,
   docs, README, user-facing copy. Code identifiers and third-party APIs keep
   their required spellings (`color`, `moduleResolution`, etc.).
-- **Node 24.** `.nvmrc` pins 24, `engines` requires `>=24`, tsup targets
-  `node24`, CI reads `node-version-file: .nvmrc`. Do not reintroduce Node 20/22.
+- **Node 26 for development, 24 for consumers.** `.nvmrc` pins 26 and the
+  workspace `engines` requires `>=26`. The published package keeps `>=24` and
+  tsup targets `node24`. CI reads `node-version-file: .nvmrc`. Do not
+  reintroduce Node 20/22.
 - **Arrow functions only** (`func-style`). Class methods are fine; top-level
   `function` declarations are not.
 - **No default exports** outside config files and `global-setup.ts`.
